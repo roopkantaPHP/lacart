@@ -1,0 +1,9 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+
+    //RewriteCond %{HTTP_HOST} ^lacart.com [NC]
+    //RewriteRule ^(.*)$ http://www.lacart.com/$1 [R=301,L]
+</IfModule>

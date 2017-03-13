@@ -1,0 +1,3 @@
+<?php
+$credit->reversals->create();
+?>

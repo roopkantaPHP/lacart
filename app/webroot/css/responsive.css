@@ -1,0 +1,96 @@
+@charset "utf-8";
+/* CSS Document */
+
+@media (max-width: 1024px) { 
+.header{padding:0;}
+.footer{padding:20px 0;}
+.guide-msg{padding:12px 0;}
+.container{max-width:auto; margin:0 15px;}
+/* ==== */
+.row.filter-container ul.results > li { float: none; display: inline-block; }
+.row.filter-container ul.results { text-align: center; }
+.filters-group { width: 100% }
+.complete-odr-div{left:30%;top:20%;}
+.profile-section{background-size:100% 100%}
+}
+@media (min-width:1025px){
+.profile-section { min-height:244px;}
+}
+
+@media (max-width: 850px) { 
+.search-btn{margin-right:10px;}
+.btn{font-size:16px;}
+.bottom-nav li{ margin-right: 20px; padding-right: 20px; width: auto;}
+}
+@media (max-width: 768px) { 
+}
+@media (max-width: 767px) { 
+.dish-lst li{margin-left:0; width:auto;}
+.dish-lst li h3{margin-bottom:20px;}
+.logo{left:40%;}
+.serving { float: left;margin-left: 20px; width: 28%;}
+.dashboard input[type="button"]{float:left; margin-left:20px; margin-right:0px;}
+.dashboard { float: left; margin-top: 30px; width: 100%;}
+.odder-inner.msg-block input[type="button"]{margin-left:0px;}
+.complete-odr-div {    margin: 10% auto 0;    max-width: 94%;    position: static;    width: 340px;}
+.descon {float: left;width: 100%;}
+
+}
+@media (max-width: 640px) { 
+.login-sgnup{display:none;}
+.search-btn{margin-right:0px;}
+.logo{left:50%;}
+.bottom-nav ul{ border-top:1px solid #000; padding-top:10px;}
+.bottom-nav li{width:100%; text-align:left; border-right:0px; border-bottom:1px solid #000; margin:0; margin-bottom:10px; padding-bottom:10px;}
+/* ========= */
+.filters-group ul { width: 100%; float: left; padding-bottom: 5px }
+.filters-group li { margin-bottom: 5px!important }
+.filters-group > a { float: left; padding: 0; padding-bottom: 13px }
+.filter-box { top: 90px; right: 0; width: 100% }
+.profile-section{background-size:100% 100%; height:auto;}
+}
+@media (max-width: 600px) {
+.form-inner{max-width:auto; margin:0 15px; padding:35px 0;}
+}
+@media (max-width: 520px) {
+.form .field-lbl{width:22%;}
+.form .field1-input{width: 78%;}
+}
+@media (max-width: 480px) {
+.righttxt{width:100%; margin-bottom:10px;}
+.social{width:100%; float:left;}
+.bottom-nav{margin-top:20px;}
+.dish-lst li .data{margin-bottom:30px;}
+.love-dish{padding-top:35px;}
+/* ===== */
+.row.filter-container ul.results { margin: 0; overflow: visible; }
+.row.filter-container ul.results > li { margin: 25px 0 0 0; }
+.row.filter-container ul.results > li:first-child { margin: 0 ; }
+.serving { margin-bottom: 30px; width: 95%;}
+.dashboard input[type="button"]{float:left; margin-left:20px;}
+.descon {  margin-bottom: 30px; width: 100%;}
+.complete-odr-div {    margin: 10% auto 0;    max-width: 94%;    position: static;    width: 340px;}
+.odder-inner.msg-block{padding-left:20px;}
+
+}
+@media (max-width: 420px) {
+.form .field-lbl{width:25%;}
+.form .field1-input{width: 75%;}
+}
+@media (max-width: 360px) { 
+.btn{font-size:15px; padding:10px 16px 11px;}
+.dish-lst li .data{padding-left: 110px;}
+.dish-lst .image{width:95px;}
+.dish-lst p{padding-bottom: 10px; padding-top: 0;}
+.form .field-lbl{width: 32%;}
+.form .field1-input{ width: 68%;}
+/* ========== */
+.row.filter-container ul.results > li { width: 100% } 
+.row.filter-container ul.results > li .result-upper { width: 96%; padding: 35px 2% }
+.row.filter-container ul.results > li .result-lower { width: 100%; padding: 5px 0  }
+.row.filter-container ul.results > li .figure-content h3 { font-size: 16px }
+
+}
+@media (max-width: 320px) { 
+.diet .filter-body ul li { width: 100%; padding-bottom: 15px }
+}

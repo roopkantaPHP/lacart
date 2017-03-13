@@ -1,0 +1,65 @@
+@CHARSET "UTF-8";
+.custom-checkbox{
+		width: 28px;
+		height: 29px;
+		display: inline-block;
+		position: relative;
+		z-index: 1;
+		top: 7px;
+		margin-right: 5px;
+		background: url("../images/checkboxs.png") no-repeat 0 -31px;
+	}
+	.custom-checkbox:hover{
+		background: url("../images/checkboxs.png") no-repeat 0 -31px;
+	}
+	.custom-checkbox.selected{
+		background: url("../images/checkboxs.png") no-repeat ;
+	}
+	.custom-checkbox input[type="checkbox"]{
+		margin: 0;
+		position: absolute;
+		z-index: 2;            
+		cursor: pointer;
+		outline: none;
+		opacity: 0;
+		left: 0;
+		/* CSS hacks for older browsers */
+		_noFocusLine: expression(this.hideFocus=true); 
+		-ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=0)";
+		filter: alpha(opacity=0);
+		-khtml-opacity: 0;
+		-moz-opacity: 0;
+		width: 30px; 
+		height: 30px;
+	}
+    
+    .dining .custom-checkbox { top: 2px;}
+    /* Let's Beautify Our Form */
+    form{
+        margin: 20px;
+    }
+    label{
+        display: block;
+        padding: 2px 0;
+    }
+    input[type="submit"]{
+        float: left;
+        background: #f2f2f2;
+        border: 1px solid #CCCCCC;
+        border-radius: 4px;
+        margin-top: 20px;
+        padding: 4px 10px;
+        cursor: pointer;
+        outline: none;
+    }
+    input[type="submit"]:hover{
+        color: #fff;
+        border-color: #1b7aa9;
+        background-color: #239fdb;
+    }
+
+    .unselected .sortarrow {display: none;}
+   .btn-next {background: none repeat scroll 0 0 rgb(202, 2, 2);border-radius: 3px;color: #fff;font-family: "Raleway",sans-serif;
+    font-size: 14px; font-weight: bold;  margin-bottom: 50px; width: 94%; padding:15px 0px; float:left;}
+    input[type="submit"].btn-next {background: none repeat scroll 0 0 rgb(202, 2, 2);border-radius: 3px;color: #fff;font-family: "Raleway",sans-serif;
+    font-size: 14px; font-weight: bold;  margin-bottom: 50px; width: 94%; padding:15px 0px; float:left;}
