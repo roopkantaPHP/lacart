@@ -64,18 +64,18 @@
  */
 class DATABASE_CONFIG {
 
-/*	public $default = array(
+public $default = array(
 		'datasource' => 'Database/Mysql',
 		'persistent' => false,
-		'host' => '192.168.1.200',
-		'login' => 'xicom',
-		'password' => 'technologies',
-		'database' => 'fnb',
+		'host' => '198.54.115.93',
+		'login' => 'roopljav_roop',
+		'password' => 'roop2Cashu',
+		'database' => 'lacart',
 		'prefix' => '',
 		//'encoding' => 'utf8',
-	); */
+	);
 
-	public $default = array(
+	/*public $default = array(
 		'datasource' => 'Database/Mysql',
 		'persistent' => false,
 		'host' => 'localhost',
@@ -84,7 +84,7 @@ class DATABASE_CONFIG {
 		'database' => 'lacart',
 		'prefix' => '',
 		//'encoding' => 'utf8',
-	);
+	);*/
 
 	public $test = array(
 		'datasource' => 'Database/Mysql',
