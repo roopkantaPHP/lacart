@@ -1,10 +1,10 @@
 <?php
 App::uses('AppController', 'Controller');
 
-/** 
-*  Project : FNB 
-*  Author : Agam 
-*  Creation Date : 22-Sep-2014 
+/**
+*  Project : FNB
+*  Author : Agam
+*  Creation Date : 22-Sep-2014
 *  Description : This is Api controller file which will be called by the mobile devices
 */
 
@@ -15,7 +15,7 @@ class ApiController extends AppController {
 	var $layout = false;
 	var $autoRender = false;
     var $limit = 15;
-    
+
    	function beforeFilter()
 	{
 		Configure::write('debug', 2);
@@ -28,18 +28,18 @@ class ApiController extends AppController {
 		parent::beforeFilter();
 		$this->Auth->allow();
 	}
-	
+
 	public $components = array('SuiteTest','Paypal','Push','Email','Stripe');
-   
+
 	/*
-	 * User Registeration API 
+	 * User Registeration API
 	 * Author:- Agam
 	 */
 	public function register()
 	{
 		//header('Content-Type: application/json');
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
+		$data = $this->request->query;
 		$error = '';
 		App::import('Model', 'User');
 		$user = new User();
@@ -53,14 +53,14 @@ class ApiController extends AppController {
 		}
 		else
 		{
-			$email = $data['email']; 
-			$regex = '/^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$/'; 
+			$email = $data['email'];
+			$regex = '/^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$/';
 			if (!preg_match($regex, $email))
 			{
 				$error .= 'Email Format is not valid. ';
 			}
 		}
-		
+
 		if(!isset($data['password']) || empty($data['password']))
 		{
 			$error .= 'Password is Required. ';
@@ -116,7 +116,7 @@ class ApiController extends AppController {
 			$user_data['User']['password'] = $data['password'];
 			$user_data['User']['group_id'] = NORMAL_USER;
 			$user_data['User']['phone'] = $data['phone'];
-			
+
 			$emValue = trim($data['email']);
 
 			$Email = new CakeEmail('smtp');
@@ -128,12 +128,12 @@ class ApiController extends AppController {
 			$arr = array();
 			$arr['{{name}}'] = $data['email'];
 			$arr['{{activation_url}}'] = $linkTag;
-			
+
 			$email_content = $this->EmailTemplate->findBySlug('verify-email');
 
 
 			$subject = $email_content['EmailTemplate']['subject'];
-			
+
 			$content = $email_content['EmailTemplate']['content'];
 			$content = str_replace(array_keys($arr), array_values($arr), $content);
 
@@ -144,7 +144,7 @@ class ApiController extends AppController {
 			$Email->subject($subject);
 			$Email->replyTo($reply_to_email);
 			$Email->emailFormat('html');
-			
+
 			if($Email->send($content))
 			{
 				$user_data['User']['email_verification_code'] = $randString;
@@ -162,7 +162,7 @@ class ApiController extends AppController {
 					);
 					$user_data['User']['is_new_user'] = 1;
 					$user_data['User']['isRegistrationConfirmed'] = 0;
-					
+
 					if(isset($data['device_id']) && !empty($data['device_id']) && isset($data['device_type']) && !empty($data['device_type']))
 					{
 						$this->loadModel('UserApp');
@@ -176,11 +176,11 @@ class ApiController extends AppController {
 							$this->UserApp->save(null);
 						}
 					}
-				
+
 					$this->response = array(
 						'status' => 200,
 						'message' => 'User Successfully saved',
-						'data' => $user_data 
+						'data' => $user_data
 					);
 				}
 				else
@@ -204,23 +204,23 @@ class ApiController extends AppController {
 
 
 /*
- * User Login API 
+ * User Login API
  * Author:- Agam
  */
 	public function login()
 	{
 		//header('Content-Type: application/json');
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
+		$data = $this->request->query;
 		$error = '';
 		if(!isset($data['email']) || empty($data['email']))
 		{
 			$error .= 'Email is Required. ';
-		} 
+		}
 		else
 		{
-			$email = $data['email']; 
-			$regex = '/^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$/'; 
+			$email = $data['email'];
+			$regex = '/^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$/';
 			if (!preg_match($regex, $email))
 			{
 				$error .= 'Email Format is not valid. ';
@@ -253,7 +253,7 @@ class ApiController extends AppController {
 				)
 			);
 			if(!empty($user_data))
-			{				
+			{
 				if(isset($user_data['User']['email_verified']) && $user_data['User']['email_verified']==1 && isset($user_data['User']['is_active']) && $user_data['User']['is_active']==1)
 				{
 					// Encrypt some data.
@@ -266,7 +266,7 @@ class ApiController extends AppController {
 					if($this->Kitchen->find('count', array('conditions'=> array('Kitchen.status'=>'On','Kitchen.user_id'=>$user_data['User']['id']))))
 					{
 						$user_data['User']['Kitchen']['status'] = 1;
-						$user_data['User']['is_complete_wizard'] = 1;	
+						$user_data['User']['is_complete_wizard'] = 1;
 					}
 
 					if($user_data['User']['is_new_user']==1)
@@ -290,7 +290,7 @@ class ApiController extends AppController {
 					$user_data['User']['city_name'] = '';
 					if(isset($user_data['User']['city_id']) && !empty($user_data['User']['city_id']))
 						$user_data['User']['city_name'] = $user_data['User']['city_id'];
-					
+
 					if(isset($data['device_id']) && !empty($data['device_id']) && isset($data['device_type']) && !empty($data['device_type']))
 					{
 						$this->loadModel('UserApp');
@@ -309,7 +309,7 @@ class ApiController extends AppController {
 						'status' => 200,
 						'message' => 'User Successfully Logged in',
 						'data' => $user_data['User']
-					);	
+					);
 				}
 				else if(isset($user_data['User']['email_verified']) && $user_data['User']['email_verified']==0)
 				{
@@ -325,7 +325,7 @@ class ApiController extends AppController {
 						'message' => 'Your account is status is deactivated. Please contact administrator.',
 					);
 				}
-				
+
 			} else
 			{
 				$this->response = array(
@@ -334,7 +334,7 @@ class ApiController extends AppController {
 				);
 			}
 	 	}
-	 	
+
 		echo json_encode($this->response);
 	}
 
@@ -346,10 +346,10 @@ class ApiController extends AppController {
 	{
 		//header('Content-Type: application/json');
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
+		$data = $this->request->query;
 		$error = '';
 		$this->loadModel('User');
-		
+
 		if(!isset($data['facebook_id']) || empty($data['facebook_id']))
 		{
 			$error .= 'Facebook user id is Required. ';
@@ -362,7 +362,7 @@ class ApiController extends AppController {
 		{
 			$error .= 'Email is Required. ';
 		}
-	
+
 		if(!empty($error))
 		{
 			$this->response = array(
@@ -372,7 +372,7 @@ class ApiController extends AppController {
 		}
 		else
 	 	{
-		
+
 	 		$user_data = $this->User->find('first',array(
 	 											'fields' => array('id', 'name', 'phone', 'is_new_user', 'email','is_verified' ,'image','facebook_id','address', 'state_id', 'city_id', 'zipcode', 'google_id','is_complete_wizard', 'created', 'modified','password'),
 												'conditions' => array(
@@ -403,13 +403,13 @@ class ApiController extends AppController {
 						$user_data['User']['image'] = $FileName;
 					}
 				$user_data['User']['image'] = (!empty($user_data['User']['image'])) ? Router::url('/'.PROFILE_IMAGE_URL.$user_data['User']['image'],true) : "";
-				
+
 				$this->loadModel('Kitchen');
 				$user_data['User']['Kitchen']['status'] = 0;
 				if($this->Kitchen->find('count', array('conditions'=> array('Kitchen.status'=>'On','Kitchen.user_id'=>$user_data['User']['id']))))
 				{
-					$user_data['User']['Kitchen']['status'] = 1;	
-					$user_data['User']['is_complete_wizard'] = 1;	
+					$user_data['User']['Kitchen']['status'] = 1;
+					$user_data['User']['is_complete_wizard'] = 1;
 				}
 
 				$user_data['User']['hide_password'] = 0;
@@ -421,7 +421,7 @@ class ApiController extends AppController {
 					$user_data['User']['isRegistrationConfirmed'] = 1;
 				else
 					$user_data['User']['isRegistrationConfirmed'] = 0;
-				
+
 				$user_data['User']['state_name'] = '';
 				if(isset($user_data['User']['state_id']) && !empty($user_data['User']['state_id']))
 					$user_data['User']['state_name'] = $user_data['User']['state_id'];
@@ -429,7 +429,7 @@ class ApiController extends AppController {
 				$user_data['User']['city_name'] = '';
 				if(isset($user_data['User']['city_id']) && !empty($user_data['User']['city_id']))
 					$user_data['User']['city_name'] = $user_data['User']['city_id'];
-				
+
 				//$user_data['STRIPE_PUBLISHABLE_KEY'] = STRIPE_PUBLISHABLE_KEY;
 				$this->response = array(
 					'status' => 200,
@@ -465,7 +465,7 @@ class ApiController extends AppController {
 						fclose($file);
 						$this->User->set('image', $FileName);
 					}
-					
+
 					$fresh_data['id'] = $user_data['User']['id'];
 					$fresh_data['group_id'] = NORMAL_USER;
 					$fresh_data['facebook_id'] = $data['facebook_id'];
@@ -473,7 +473,7 @@ class ApiController extends AppController {
 					$this->loadModel('Kitchen');
 					$user_data['User']['Kitchen']['status'] = 0;
 					$user_data['User']['image'] = (!empty($user_data['User']['image'])) ? Router::url('/'.PROFILE_IMAGE_URL.$user_data['User']['image'],true) : "";
-					
+
 					$user_data['User']['hide_password'] = 0;
 						if($user_data['User']['password'] == AuthComponent::password('$$##||&||##$$'))
 							$user_data['User']['hide_password'] = 1;
@@ -482,7 +482,7 @@ class ApiController extends AppController {
 						$user_data['User']['isRegistrationConfirmed'] = 1;
 					else
 						$user_data['User']['isRegistrationConfirmed'] = 0;
-					
+
 					$user_data['User']['state_name'] = '';
 					if(isset($user_data['User']['state_id']) && !empty($user_data['User']['state_id']))
 						$user_data['User']['state_name'] = $user_data['User']['state_id'];
@@ -490,11 +490,11 @@ class ApiController extends AppController {
 					$user_data['User']['city_name'] = '';
 					if(isset($user_data['User']['city_id']) && !empty($user_data['User']['city_id']))
 						$user_data['User']['city_name'] = $user_data['User']['city_id'];
-					
+
 					if($this->Kitchen->find('count', array('conditions'=> array('Kitchen.status'=>'On','Kitchen.user_id'=>$user_data['User']['id']))))
 					{
-						$user_data['User']['Kitchen']['status'] = 1;	
-						$user_data['User']['is_complete_wizard'] = 1;	
+						$user_data['User']['Kitchen']['status'] = 1;
+						$user_data['User']['is_complete_wizard'] = 1;
 					}
 
 					//$user_data['STRIPE_PUBLISHABLE_KEY'] = STRIPE_PUBLISHABLE_KEY;
@@ -522,7 +522,7 @@ class ApiController extends AppController {
 						$user_data['User']['image'] = $FileName;
 					}
 					$this->User->set($user_data);
-					
+
 					$this->User->create();
 					if($this->User->save($user_data, array('validate' => false)))
 					{
@@ -538,7 +538,7 @@ class ApiController extends AppController {
 						// Encrypt some data.
 						$encryptedUid =  $this->Paypal->encrypt($user_data['User']['id']);
 						$user_data['User']['rajnikant'] = $encryptedUid;
-						
+
 						$user_data['User']['hide_password'] = 0;
 						if($user_data['User']['password'] == AuthComponent::password('$$##||&||##$$'))
 							$user_data['User']['hide_password'] = 1;
@@ -547,7 +547,7 @@ class ApiController extends AppController {
 							$user_data['User']['isRegistrationConfirmed'] = 1;
 						else
 							$user_data['User']['isRegistrationConfirmed'] = 0;
-						
+
 						$user_data['User']['state_name'] = '';
 						if(isset($user_data['User']['state_id']) && !empty($user_data['User']['state_id']))
 							$user_data['User']['state_name'] = $user_data['User']['state_id'];
@@ -557,13 +557,13 @@ class ApiController extends AppController {
 							$user_data['User']['city_name'] = $user_data['User']['city_id'];
 
 						$user_data['User']['image'] = (!empty($user_data['User']['image'])) ? Router::url('/'.PROFILE_IMAGE_URL.$user_data['User']['image'],true) : "";
-					
+
 						$this->loadModel('Kitchen');
 						$user_data['User']['Kitchen']['status'] = 0;
 						if($this->Kitchen->find('count', array('conditions'=> array('Kitchen.status'=>'On','Kitchen.user_id'=>$user_data['User']['id']))))
 						{
-							$user_data['User']['Kitchen']['status'] = 1;	
-							$user_data['User']['is_complete_wizard'] = 1;	
+							$user_data['User']['Kitchen']['status'] = 1;
+							$user_data['User']['is_complete_wizard'] = 1;
 						}
 
 						//$user_data['STRIPE_PUBLISHABLE_KEY'] = STRIPE_PUBLISHABLE_KEY;
@@ -610,7 +610,7 @@ class ApiController extends AppController {
 	{
 		//header('Content-Type: application/json');
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
+		$data = $this->request->query;
 		$error = '';
 		App::import('Model', 'User');
 		$user = new User();
@@ -643,7 +643,7 @@ class ApiController extends AppController {
 												)
 											)
 									);
-	 		
+
 			if(!empty($user_data))
 			{
 				// Encrypt some data.
@@ -665,7 +665,7 @@ class ApiController extends AppController {
 				}
 				$user_data['User']['image'] = (!empty($user_data['User']['image'])) ? Router::url('/'.PROFILE_IMAGE_URL.$user_data['User']['image'],true) : "";
 				$this->loadModel('Kitchen');
-				
+
 
 				$user_data['User']['hide_password'] = 0;
 						if($user_data['User']['password'] == AuthComponent::password('$$##||&||##$$'))
@@ -676,7 +676,7 @@ class ApiController extends AppController {
 					$user_data['User']['isRegistrationConfirmed'] = 1;
 				else
 					$user_data['User']['isRegistrationConfirmed'] = 0;
-				
+
 				$user_data['User']['state_name'] = '';
 				if(isset($user_data['User']['state_id']) && !empty($user_data['User']['state_id']))
 					$user_data['User']['state_name'] = $user_data['User']['state_id'];
@@ -684,12 +684,12 @@ class ApiController extends AppController {
 				$user_data['User']['city_name'] = '';
 				if(isset($user_data['User']['city_id']) && !empty($user_data['User']['city_id']))
 					$user_data['User']['city_name'] = $user_data['User']['city_id'];
-				
+
 				$user_data['User']['Kitchen']['status'] = 0;
 				if($this->Kitchen->find('count', array('conditions'=> array('Kitchen.status'=>'On','Kitchen.user_id'=>$user_data['User']['id']))))
 				{
-					$user_data['User']['Kitchen']['status'] = 1;	
-					$user_data['User']['is_complete_wizard'] = 1;	
+					$user_data['User']['Kitchen']['status'] = 1;
+					$user_data['User']['is_complete_wizard'] = 1;
 				}
 
 				//$user_data['STRIPE_PUBLISHABLE_KEY'] = STRIPE_PUBLISHABLE_KEY;
@@ -732,15 +732,15 @@ class ApiController extends AppController {
 					$fresh_data['group_id'] = NORMAL_USER;
 					$fresh_data['google_id'] = $data['google_id'];
 					$user->save($fresh_data);
-					
+
 					$this->loadModel('Kitchen');
 					$user_data['User']['Kitchen']['status'] = 0;
 					if($this->Kitchen->find('count', array('conditions'=> array('Kitchen.status'=>'On','Kitchen.user_id'=>$user_data['User']['id']))))
 					{
-						$user_data['User']['Kitchen']['status'] = 1;	
-						$user_data['User']['is_complete_wizard'] = 1;	
+						$user_data['User']['Kitchen']['status'] = 1;
+						$user_data['User']['is_complete_wizard'] = 1;
 					}
-					
+
 					$user_data['User']['hide_password'] = 0;
 						if($user_data['User']['password'] == AuthComponent::password('$$##||&||##$$'))
 							$user_data['User']['hide_password'] = 1;
@@ -749,7 +749,7 @@ class ApiController extends AppController {
 						$user_data['User']['isRegistrationConfirmed'] = 1;
 					else
 						$user_data['User']['isRegistrationConfirmed'] = 0;
-					
+
 					$user_data['User']['state_name'] = '';
 					if(isset($user_data['User']['state_id']) && !empty($user_data['User']['state_id']))
 						$user_data['User']['state_name'] = $user_data['User']['state_id'];
@@ -757,9 +757,9 @@ class ApiController extends AppController {
 					$user_data['User']['city_name'] = '';
 					if(isset($user_data['User']['city_id']) && !empty($user_data['User']['city_id']))
 						$user_data['User']['city_name'] = $user_data['User']['city_id'];
-					
+
 					$user_data['User']['image'] = (!empty($user_data['User']['image'])) ? Router::url('/'.PROFILE_IMAGE_URL.$user_data['User']['image'],true) : "";
-					
+
 					//$user_data['STRIPE_PUBLISHABLE_KEY'] = STRIPE_PUBLISHABLE_KEY;
 
 					$this->response = array(
@@ -774,7 +774,7 @@ class ApiController extends AppController {
 					$user_data['User']['name'] = $data['name'];
 					$user_data['User']['email'] = $data['email'];
 					$user_data['User']['password'] = AuthComponent::password('$$##||&||##$$');
-					
+
 					if(isset($data['Imageurl']) && !empty($data['Imageurl']) && empty($user_data['User']['image'])){
 						$imageData = file_get_contents($data['Imageurl']);
 						$FileName = mt_rand().'-'.time().'.jpg';
@@ -801,7 +801,7 @@ class ApiController extends AppController {
 						// Encrypt some data.
 						$encryptedUid =  $this->Paypal->encrypt($user_data['User']['id']);
 						$user_data['User']['rajnikant'] = $encryptedUid;
-						
+
 						$user_data['User']['hide_password'] = 0;
 						if($user_data['User']['password'] == AuthComponent::password('$$##||&||##$$'))
 							$user_data['User']['hide_password'] = 1;
@@ -810,7 +810,7 @@ class ApiController extends AppController {
 							$user_data['User']['isRegistrationConfirmed'] = 1;
 						else
 							$user_data['User']['isRegistrationConfirmed'] = 0;
-						
+
 						$user_data['User']['state_name'] = '';
 						if(isset($user_data['User']['state_id']) && !empty($user_data['User']['state_id']))
 							$user_data['User']['state_name'] = $user_data['User']['state_id'];
@@ -818,15 +818,15 @@ class ApiController extends AppController {
 						$user_data['User']['city_name'] = '';
 						if(isset($user_data['User']['city_id']) && !empty($user_data['User']['city_id']))
 							$user_data['User']['city_name'] = $user_data['User']['city_id'];
-						
+
 						$user_data['User']['image'] = (!empty($user_data['User']['image'])) ? Router::url('/'.PROFILE_IMAGE_URL.$user_data['User']['image'],true) : "";
-					
+
 						$this->loadModel('Kitchen');
 						$user_data['User']['Kitchen']['status'] = 0;
 						if($this->Kitchen->find('count', array('conditions'=> array('Kitchen.status'=>'On','Kitchen.user_id'=>$user_data['User']['id']))))
 						{
 							$user_data['User']['Kitchen']['status'] = 1;
-							$user_data['User']['is_complete_wizard'] = 1;		
+							$user_data['User']['is_complete_wizard'] = 1;
 						}
 
 						//$user_data['STRIPE_PUBLISHABLE_KEY'] = STRIPE_PUBLISHABLE_KEY;
@@ -862,7 +862,7 @@ class ApiController extends AppController {
 				}
 			}
 
-			
+
 	 	}
 		echo json_encode($this->response);
 	}
@@ -875,7 +875,7 @@ class ApiController extends AppController {
 	{
 		//header('Content-Type: application/json');
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
+		$data = $this->request->query;
 		$error = '';
 		App::import('Model', 'User');
 		$user = new User();
@@ -883,7 +883,7 @@ class ApiController extends AppController {
 		{
 			$error .= 'Email is Required. ';
 		}
-		
+
 		if(!empty($error))
 		{
 			$this->response = array(
@@ -901,7 +901,7 @@ class ApiController extends AppController {
 				$user->saveField('token', $forgot_token);
 				$token = array('{{name}}','{{reset_password_link}}');
 				$reset_link = Router::url(array('controller'=>'users','action'=>'reset_password',$user_data['User']['id'],$forgot_token),true);
-				
+
 				if(empty($user_data['User']['name']))
 					$name = 'User';
 				else
@@ -936,7 +936,7 @@ class ApiController extends AppController {
 		//$this->_isValidApiRequest();
 		////header('Content-Type: application/json');
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
+		$data = $this->request->query;
 		$error = '';
 		$this->loadModel('User');
 		if(!isset($data['user_id']) || empty($data['user_id']))
@@ -955,12 +955,12 @@ class ApiController extends AppController {
 		{
 			//$error .= 'Image is Required. ';
 		}
-	
-		
+
+
 		if(!empty($error))
 		{
 			$this->response = array(
-				'status' => 2,	
+				'status' => 2,
 				'message' => $error
 			);
 		}
@@ -975,7 +975,7 @@ class ApiController extends AppController {
 			{
 				if(filter_var($data['image'], FILTER_VALIDATE_URL))
 				{
-					
+
 				}
 				else if($data['image'] != 'undefined' && $data['image'] != '' && substr( $data['image'], 0, 10 ) === "data:image")
 				{
@@ -994,10 +994,10 @@ class ApiController extends AppController {
 			}
 			$userData['is_complete_wizard'] = 1;
 			if(isset($data['description'])) {	$userData['description'] = $data['description']; }
-			
+
 			if(isset($data['stripe_user_id']) && !empty($data['stripe_user_id'])){ $userData['stripe_user_id'] = $data['stripe_user_id'];}
 			if(isset($data['stripe_publish_key']) && !empty($data['stripe_publish_key'])) { $userData['stripe_publish_key'] = $data['stripe_publish_key'];}
-			
+
 			$kitchenData['user_id'] = $data['user_id'];
 			if(isset($data['kitchen_name'])) { $kitchenData['name'] = $data['kitchen_name'];}
 			if(isset($data['kitchen_description'])) {$kitchenData['description'] = $data['kitchen_description'];}
@@ -1017,12 +1017,12 @@ class ApiController extends AppController {
 			{
 				$latlong = explode(',', $data['kitchen_lat_long']);
 				$kitchenData['lat'] = $latlong[0];
-				$kitchenData['lng'] = $latlong[1];	
+				$kitchenData['lng'] = $latlong[1];
 			}
-			
+
 			//if(isset($data['dining_dine_in'])) {$kitchenData['dining_dine_in'] = $data['dining_dine_in']; }
 			//if(isset($data['dining_take_out'])) {$kitchenData['dining_take_out'] = $data['dining_take_out']; }
-			
+
 			if(!empty($data['cover_photo']) && substr( $data['cover_photo'], 0, 10 ) === "data:image")
 			{
 				$FileName = mt_rand().'-'.time().'.jpeg';
@@ -1034,7 +1034,7 @@ class ApiController extends AppController {
 			}
 			$userNamenEmail = $this->User->findById($data['user_id']);
 			$AccountStatus = 0;
-			
+
 			if(isset($data['paypal_id']) && !empty($data['paypal_id']))
 			{
 				$userData['paypal_id'] = $data['paypal_id'];
@@ -1050,9 +1050,9 @@ class ApiController extends AppController {
 				$userData['stripe_publish_id'] = $data['stripe_publish_id'];
 				$AccountStatus = 1;
 			}
-			
+
 			if((isset($data['kitchen_status']) && $data['kitchen_status']==0) || (isset($data['kitchen_status']) && $data['kitchen_status']==1 && $AccountStatus == 1) || (!isset($data['kitchen_status']) && empty($userNamenEmail['Kitchen']['id'])) || (isset($userNamenEmail['User']['stripe_user_id']) && !empty($userNamenEmail['User']['stripe_user_id'])) || (isset($userNamenEmail['User']['is_paypal_verified']) && $userNamenEmail['User']['is_paypal_verified'] == 1)){
-				
+
 				$this->User->set($userData);
 				if($this->User->validates()){
 					if(isset($userData['id']) && !empty($userData))
@@ -1075,7 +1075,7 @@ class ApiController extends AppController {
 					$errors = $this->User->validationErrors;
 					$err = '';
 					foreach ($errors as $key => $value) {
-						$err .= $value[0].','; 
+						$err .= $value[0].',';
 					}
 					$this->response = array(
 							'status' => 2,
@@ -1104,7 +1104,7 @@ class ApiController extends AppController {
 									$kitchenData['UploadImage'][$i]['type'] = 'kitchen';
 									$i++;
 								}
-							}	
+							}
 						}
 					}
 					$this->loadModel('Kitchen');
@@ -1152,7 +1152,7 @@ class ApiController extends AppController {
 	{
 		//header('Content-Type: application/json');
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
+		$data = $this->request->query;
 		$error = '';
 		$this->loadModel('User');
 		if(!isset($data['user_id']) || empty($data['user_id']))
@@ -1166,7 +1166,7 @@ class ApiController extends AppController {
 				$error .= 'User not exists. ';
 			}
 		}
-		
+
 		if(!empty($error))
 		{
 			$this->response = array(
@@ -1177,16 +1177,16 @@ class ApiController extends AppController {
 		else
 		{
 			$userData['id'] = $data['user_id'];
-			
+
 			if(isset($data['stripe_user_id']) && !empty($data['stripe_user_id'])){ $userData['stripe_user_id'] = $data['stripe_user_id'];}
 			if(isset($data['stripe_publish_key']) && !empty($data['stripe_publish_key'])) { $userData['stripe_publish_key'] = $data['stripe_publish_key'];}
-			
+
 			$kitchenData['user_id'] = $data['user_id'];
 			if(isset($data['kitchen_name'])) {
 			$kitchenData['name'] = $data['kitchen_name'];
 			}
 			if(isset($data['kitchen_description'])) {$kitchenData['description'] = $data['kitchen_description'];}
-			
+
 			if(isset($data['diet'])) {
 			$userData['diet'] = $data['diet'];
 			}
@@ -1205,9 +1205,9 @@ class ApiController extends AppController {
 			{
 				$latlong = explode(',', $data['kitchen_lat_long']);
 				$kitchenData['lat'] = $latlong[0];
-				$kitchenData['lng'] = $latlong[1];	
+				$kitchenData['lng'] = $latlong[1];
 			}
-			
+
 			/*if(isset($data['dining_dine_in'])) {
 				$kitchenData['dining_dine_in'] = $data['dining_dine_in'];
 			}
@@ -1219,7 +1219,7 @@ class ApiController extends AppController {
 			if(isset($data['ssn_no'])) {
 				$kitchenData['ssn_no'] = $data['ssn_no'];
 			}
-			
+
 			if(!empty($data['cover_photo']) && substr( $data['cover_photo'], 0, 10 ) === "data:image")
 			{
 				$FileName = mt_rand().'-'.time().'.jpeg';
@@ -1230,10 +1230,10 @@ class ApiController extends AppController {
 				}
 			}
 			$userNamenEmail = $this->User->findById($data['user_id']);
-			
-			
+
+
 			$AccountStatus = 0;
-			
+
 			$paypalData['id'] = $data['user_id'];
 			if(isset($data['paypal_id']) && !empty($data['paypal_id']))
 			{
@@ -1252,7 +1252,7 @@ class ApiController extends AppController {
 
 				$this->User->save($paypalData);
 			}
-			
+
 			if(isset($data['stripe_user_id']) && !empty($data['stripe_user_id']))
 			{
 				$paypalData['stripe_user_id'] = $data['stripe_user_id'];
@@ -1285,7 +1285,7 @@ class ApiController extends AppController {
 								$kitchenData['UploadImage'][$i]['type'] = 'kitchen';
 								$i++;
 							}
-						}	
+						}
 					}
 				}
 				$this->loadModel('Kitchen');
@@ -1293,7 +1293,7 @@ class ApiController extends AppController {
 				if(!empty($kitchen))
 				{
 					$kitchenData['id'] = $kitchen['Kitchen']['id'];
-					
+
 					if(!empty($kitchen['UploadImage']))
 					{
 						$this->loadModel('UploadImage');
@@ -1337,13 +1337,13 @@ class ApiController extends AppController {
 	{
 		//header('Content-Type: application/json');
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
+		$data = $this->request->query;
 		$error = '';
 		if(!isset($data['address']) || empty($data['address']))
 		{
 			//$error .= 'Address is Required. ';
 		}
-		
+
 		if(!empty($error))
 		{
 			$this->response = array(
@@ -1367,7 +1367,7 @@ class ApiController extends AppController {
 		}
 		echo json_encode($this->response);
 	}
-	
+
 /*
  * Method	: add_dish
  * Author	: Praveen Pandey
@@ -1377,9 +1377,9 @@ class ApiController extends AppController {
 	public function add_dish()
 	{
 		//$this->_isValidApiRequest();
-		//header('Content-Type: application/json');  
+		//header('Content-Type: application/json');
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
+		$data = $this->request->query;
 		$error = '';
 		$this->loadModel('Kitchen');
 		if(!isset($data['user_id']) || empty($data['user_id']))
@@ -1407,7 +1407,7 @@ class ApiController extends AppController {
 				'message' => $error
 			);
 		}
-		else 
+		else
 		{
 			$dishData['id'] = (!empty($data['dish_id'])) ? $data['dish_id'] : '';
 			$dishData['name'] = $data['dish_name'];
@@ -1429,7 +1429,7 @@ class ApiController extends AppController {
 				if(isset($data['portion_custom_description'])) { $dishData['p_custom_desc'] = $data['portion_custom_description'];}
 				if(empty($dishData['id']))
 				{
-					$dishData['is_custom_price_active'] = 0;	
+					$dishData['is_custom_price_active'] = 0;
 				}
 			}
 			if(isset($data['dish_status'])) { $dishData['status'] = $data['dish_status'];}
@@ -1493,7 +1493,7 @@ class ApiController extends AppController {
 					else
 						$this->ActivityLog->updateLog($data['user_id'],4,$dishData['id'],$data['timestamp']);
 				}
-				
+
 				$this->response = array(
 						'status' => 1,
 						'message' => (!empty($dishData['id'])) ? "Dish updated successfully" : "Dish saved successfully"
@@ -1518,15 +1518,15 @@ class ApiController extends AppController {
 	 public function mydishes_list()
 	 {
 		//$this->_isValidApiRequest();
-		//header('Content-Type: application/json');  
+		//header('Content-Type: application/json');
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
+		$data = $this->request->query;
 		$error = '';
 		if(!isset($data['user_id']) || empty($data['user_id']))
 		{
 			$error .= 'User id is Required. ';
 		}
-		
+
 		if(!empty($error))
 		{
 			$this->response = array(
@@ -1557,7 +1557,7 @@ class ApiController extends AppController {
 							$value['Dish']['images'][$i]['url'] = Router::url('/'.DISH_IMAGE_URL.$image['name'],true);
 							$i++;
 						}
-						$resultArray['Dishes'][$key] = $value['Dish'];				
+						$resultArray['Dishes'][$key] = $value['Dish'];
 					}
 				}
 				$this->response = array(
@@ -1573,7 +1573,7 @@ class ApiController extends AppController {
 					'message' => 'Kitchen does not exists.'
 				);
 			}
-			
+
 		}
 		echo json_encode($this->response);
 	 }
@@ -1586,9 +1586,9 @@ class ApiController extends AppController {
  	public function active_dish()
 	{
 		//$this->_isValidApiRequest();
-		//header('Content-Type: application/json');  
+		//header('Content-Type: application/json');
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
+		$data = $this->request->query;
 		$error = '';
 		if(!isset($data['user_id']) || empty($data['user_id']))
 		{
@@ -1602,7 +1602,7 @@ class ApiController extends AppController {
 		{
 			$error .= 'Please send time stamp for this activity. ';
 		}
-		
+
 		if(!empty($error))
 		{
 			$this->response = array(
@@ -1644,7 +1644,7 @@ class ApiController extends AppController {
 				if(isset($data['serving_time_end'])) { $dishData['serve_end_time'] = $data['serving_time_end'];	}
 				if(isset($data['lead_time'])) {	$dishData['lead_time'] = $data['lead_time']; }
 				if(isset($data['repeat_dish'])) { $dishData['repeat'] = $data['repeat_dish']; }
-				
+
 				if($this->Dish->save($dishData))
 				{
 					//Update Activity Log
@@ -1671,7 +1671,7 @@ class ApiController extends AppController {
 							'status' => 2,
 							'message' => "Error Please try again"
 					);
-				}				
+				}
 			}
 		}
 		echo json_encode($this->response);
@@ -1685,9 +1685,9 @@ class ApiController extends AppController {
  	public function dish_info()
 	{
 		//$this->_isValidApiRequest();
-		//header('Content-Type: application/json');  
+		//header('Content-Type: application/json');
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
+		$data = $this->request->query;
 		$error = '';
 		if(!isset($data['user_id']) || empty($data['user_id']))
 		{
@@ -1697,7 +1697,7 @@ class ApiController extends AppController {
 		{
 			$error .= 'Dish id is Required. ';
 		}
-		
+
 		if(!empty($error))
 		{
 			$this->response = array(
@@ -1738,7 +1738,7 @@ class ApiController extends AppController {
 						$imageId = $image['id'];
 						$result['Dish']['images'][$i]['id'] = $imageId;
 						$result['Dish']['images'][$i]['url'] = Router::url('/'.DISH_IMAGE_URL.$image['name'],true);
-						
+
 						$i++;
 					}
 				}
@@ -1760,15 +1760,15 @@ class ApiController extends AppController {
  	public function profile_info()
 	{
 		//$this->_isValidApiRequest();
-		//header('Content-Type: application/json');  
+		//header('Content-Type: application/json');
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
+		$data = $this->request->query;
 		$error = '';
 		if(!isset($data['user_id']) || empty($data['user_id']))
 		{
 			$error .= 'User id is Required. ';
 		}
-		
+
 		if(!empty($error))
 		{
 			$this->response = array(
@@ -1781,13 +1781,13 @@ class ApiController extends AppController {
 			$this->loadModel('User');
 			$user = $this->User->findByid($data['user_id']);
 			$userDetails = $this->User->getUserCountData($data['user_id']);
-              
-            	
+
+
 			$result['OrderPlaced']['Count'] = 0;
 			if(isset($userDetails['Order']) && !empty($userDetails['Order'])){
 				$result['OrderPlaced']['Count'] = $userDetails['Order'][0]['Order'][0]['noOfPlacedOrders'];
 			}
-			
+
 			$this->loadModel('Kitchen');
 		    $ordersArray = $this->Kitchen->getKitchenDataForDashboard($data['user_id']);
 			    $result['OrderReceived']['Count'] = 0;
@@ -1805,7 +1805,7 @@ class ApiController extends AppController {
 		}
 		echo json_encode($this->response);
 	}
-	
+
 /**
  * Method	: kitchen_info
  * Author	: Praveen Pandey
@@ -1814,15 +1814,15 @@ class ApiController extends AppController {
  	public function kitchen_info()
 	{
 		//$this->_isValidApiRequest();
-		//header('Content-Type: application/json');  
+		//header('Content-Type: application/json');
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
+		$data = $this->request->query;
 		$error = '';
 		if(!isset($data['user_id']) || empty($data['user_id']))
 		{
 			$error .= 'User id is Required. ';
 		}
-		
+
 		if(!empty($error))
 		{
 			$this->response = array(
@@ -1841,7 +1841,7 @@ class ApiController extends AppController {
 
 			$result = array();
 			if(!empty($kitchen))
-			{				
+			{
 				$result['Kitchen'] = $kitchen['Kitchen'];
 				$result['Kitchen']['diet'] = $kitchen['User']['diet'];
 				$result['Kitchen']['allergy'] = $kitchen['User']['allergy'];
@@ -1882,15 +1882,15 @@ class ApiController extends AppController {
  	public function load_data($type)
 	{
 		//$this->_isValidApiRequest();
-		//header('Content-Type: application/json');  
+		//header('Content-Type: application/json');
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
+		$data = $this->request->query;
 		$error = '';
 		if(!isset($type) || empty($type))
 		{
 			$error .= 'Type is Required. ';
 		}
-		
+
 		if(!empty($error))
 		{
 			$this->response = array(
@@ -1906,7 +1906,7 @@ class ApiController extends AppController {
 					$this->loadModel('Allergy');
 					$result['Allergy'] = array_values($this->Allergy->find('list', array('conditions'=>array('Allergy.is_active'=>1),'fields'=>array('Allergy.id','Allergy.name'),'order'=>'name ASC')));
 					$this->loadModel('Portion');
-					$portions = $this->Portion->find('all');					
+					$portions = $this->Portion->find('all');
 					$prices = array();
 					$i=0;
 					foreach ($portions as $key => $value) {
@@ -1919,16 +1919,16 @@ class ApiController extends AppController {
 					$result['Price'] = $prices;
 					$result['Unit'] = array_values(Configure::read('UNIT'));
 					break;
-					
+
 				case 'community':
 					$this->loadModel('Community');
 					$resultData = $this->Community->find('list', array('conditions'=>array('Community.is_active'=>1),'fields'=>array('Community.id','Community.title'),'order'=>'title ASC'));
 					$result = array();
 					foreach($resultData as $com_id => $com_titile) {
 						$result[] = array('id' => $com_id, 'title' => $com_titile);
-					}	
+					}
 					break;
-					
+
 				case 'cuisine':
 					$this->loadModel('Cuisine');
 					$resultData = $this->Cuisine->find('list', array('conditions'=>array('Cuisine.is_active'=>1),'fields'=>array('Cuisine.id','Cuisine.name'),'order'=>'name ASC'));
@@ -1942,10 +1942,10 @@ class ApiController extends AppController {
 					{
 						$this->loadModel('PaymentSetting');
 						$serviceData = $this->PaymentSetting->find('first');
-					
+
 						$this->loadModel('Kitchen');
 						$resultData = $this->Kitchen->findById($data['kitchen_id']);
-					
+
 						$result = array('sale_tax' => $resultData['Kitchen']['sales_tax'], 'service_fee' => $serviceData['PaymentSetting']['service_fee']);
 					}
 					else
@@ -1954,10 +1954,10 @@ class ApiController extends AppController {
 						$resultData = $this->PaymentSetting->find('first');
 						$result = array('sale_tax' => $resultData['PaymentSetting']['sales_tax'], 'service_fee' => $resultData['PaymentSetting']['service_fee']);
 					}
-					break;	
-				
+					break;
+
 				default:
-					
+
 					break;
 			}
 			$this->response = array(
@@ -1968,18 +1968,18 @@ class ApiController extends AppController {
 		}
 		echo json_encode($this->response);
 	}
-	
+
 	public function preferences_info()
 	{
-		//header('Content-Type: application/json');  
+		//header('Content-Type: application/json');
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
+		$data = $this->request->query;
 		$error = '';
 		if(!isset($data['user_id']) || empty($data['user_id']))
 		{
 			$error .= 'User id is Required. ';
 		}
-		
+
 		if(!empty($error))
 		{
 			$this->response = array(
@@ -1990,15 +1990,15 @@ class ApiController extends AppController {
 		else
 		{
 			$this->loadModel('User');
-			
+
 			$User = $this->User->findById($data['user_id']);
-				
+
 			$result = array();
 			if(!empty($User))
-			{				
+			{
 				$result['Preferences']['allergens'] = explode('::::::::', $User['User']['allergy']);
 				$result['Preferences']['diet'] = explode(',', $User['User']['diet']);
-				
+
 			}
 			$this->response = array(
 						'status' => 1,
@@ -2008,7 +2008,7 @@ class ApiController extends AppController {
 		}
 		echo json_encode($this->response);
 	}
-	
+
 	/**
 	 * Method	: update_preferences
 	 * Author 	: Praveen Pandey
@@ -2016,15 +2016,15 @@ class ApiController extends AppController {
 	 */
 	 public function update_preferences()
 	 {
-	 	//header('Content-Type: application/json');  
+	 	//header('Content-Type: application/json');
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
+		$data = $this->request->query;
 		$error = '';
 		if(!isset($data['user_id']) || empty($data['user_id']))
 		{
 			$error .= 'User id is Required. ';
 		}
-		
+
 		if(!empty($error))
 		{
 			$this->response = array(
@@ -2055,9 +2055,9 @@ class ApiController extends AppController {
 				);
 			}
 		}
-		echo json_encode($this->response); 
+		echo json_encode($this->response);
 	 }
-	
+
 	/**
 	 * Method	: change_password
 	 * Author	: Praveen Pandey
@@ -2065,9 +2065,9 @@ class ApiController extends AppController {
 	 */
 	 public function change_password()
 	 {
-	 	//header('Content-Type: application/json');  
+	 	//header('Content-Type: application/json');
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
+		$data = $this->request->query;
 		$error = '';
 		if(!isset($data['user_id']) || empty($data['user_id']))
 		{
@@ -2085,7 +2085,7 @@ class ApiController extends AppController {
 		{
 			$error .= 'New Password is Required. ';
 		}
-		
+
 		if(!empty($error))
 		{
 			$this->response = array(
@@ -2096,8 +2096,8 @@ class ApiController extends AppController {
 		else
 		{
 			$this->loadModel('User');
-				
-			
+
+
 			$user = $this->User->find('first',array('conditions'=>array('User.id'=>$data['user_id'],'User.password'=>AuthComponent::Password($data['old_pwd'])),'recursive'=>-1));
 			if(!empty($user))
 			{
@@ -2133,9 +2133,9 @@ class ApiController extends AppController {
  */
  	public function new_discussion()
 	{
-		//header('Content-Type: application/json');  
+		//header('Content-Type: application/json');
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
+		$data = $this->request->query;
 		$error = '';
 		if(!isset($data['user_id']) || empty($data['user_id']))
 		{
@@ -2153,8 +2153,8 @@ class ApiController extends AppController {
 		{
 			$error .= 'Message is Required. ';
 		}
-		
-				
+
+
 		if(!empty($error))
 		{
 			$this->response = array(
@@ -2192,9 +2192,9 @@ class ApiController extends AppController {
  	public function explore_community()
 	{
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
+		$data = $this->request->query;
 		$error = '';
-		$this->loadModel('Community');		
+		$this->loadModel('Community');
 		$communities = $this->Community->find('all',array('conditions'=> array('Community.is_active'=>1),'fields'=>array('id','title','discussion_count')));
 		$communities= Set::classicExtract($communities, '{n}.Community');
 		$result['Community'] = $communities;
@@ -2205,7 +2205,7 @@ class ApiController extends AppController {
 				);
 		echo json_encode($this->response);
 	}
-	
+
 	/**
 	 * Method	: discussion_list
 	 * Author 	: Praveen Pandey
@@ -2213,16 +2213,16 @@ class ApiController extends AppController {
 	 */
 	 public function discussion_list()
 	 {
-	 	//header('Content-Type: application/json');  
+	 	//header('Content-Type: application/json');
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
-		$error = '';		
+		$data = $this->request->query;
+		$error = '';
 		if(!isset($data['community_id']) || empty($data['community_id']))
 		{
 			$error .= 'Community id is Required. ';
 		}
-				
-				
+
+
 		if(!empty($error))
 		{
 			$this->response = array(
@@ -2238,7 +2238,7 @@ class ApiController extends AppController {
 												)
 										);
 			$discussions = Set::classicExtract($list, '{n}.Discussion');
-			
+
 			$result['Discussion'] = $discussions;
 			$this->response = array(
 						'status' => 1,
@@ -2248,7 +2248,7 @@ class ApiController extends AppController {
 		}
 		echo json_encode($this->response);
 	 }
-	 
+
 	 /**
 	  * Method	: discussion_detail
 	  * Author	: Praveen Pandey
@@ -2256,15 +2256,15 @@ class ApiController extends AppController {
 	  */
 	  public function discussion_detail()
 	  {
-	  	//header('Content-Type: application/json');  
+	  	//header('Content-Type: application/json');
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
-		$error = '';		
+		$data = $this->request->query;
+		$error = '';
 		if(!isset($data['discussion_id']) || empty($data['discussion_id']))
 		{
 			$error .= 'Discussion id is Required. ';
 		}
-							
+
 		if(!empty($error))
 		{
 			$this->response = array(
@@ -2294,7 +2294,7 @@ class ApiController extends AppController {
 						))));
 			$discussion = $this->Discussion->find('first', array('conditions'=>array('Discussion.id'=>$data['discussion_id']),'recursive'=>2));
 			$result = array();
-			
+
              if(!empty($discussion['Discussion'])) {
 				if(empty($discussion['Discussion']['date_time']))
 					$discussion['Discussion']['date_time'] = strtotime($discussion['Discussion']['created']);
@@ -2310,10 +2310,10 @@ class ApiController extends AppController {
 			{
 				foreach ($discussion['Comment'] as $key => $comment) {
 					$comment['replied_by'] = $comment['User']['name'];
-					
+
 					if(empty($comment['date_time']))
 						$comment['date_time'] = strtotime($comment['created']);
-					
+
 					$comment['image'] = (!empty($comment['User']['image'])) ? Router::url('/'.PROFILE_IMAGE_URL.$comment['User']['image'],true) : "";
 					unset($comment['User']);
 					unset($comment['Discussion']);
@@ -2328,15 +2328,15 @@ class ApiController extends AppController {
 		}
 		echo json_encode($this->response);
 	  }
-	  
+
 	 /**
-	  * 
+	  *
 	  */
 	public function post_discussion_message()
 	{
 		//header('Content-Type: application/json');
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
+		$data = $this->request->query;
 		$error = '';
 		if(!isset($data['user_id']) || empty($data['user_id']))
 		{
@@ -2350,8 +2350,8 @@ class ApiController extends AppController {
 		{
 			$error .= 'Message is Required. ';
 		}
-		
-		
+
+
 		if(!empty($error))
 		{
 			$this->response = array(
@@ -2378,7 +2378,7 @@ class ApiController extends AppController {
 		}
 		echo json_encode($this->response);
 	}
-	  
+
 /**
  * Method	: new_message
  * Author 	: Praveen Pandey
@@ -2386,10 +2386,10 @@ class ApiController extends AppController {
  */
  	public function new_messageold()
 	{
-		//header('Content-Type: application/json');  
+		//header('Content-Type: application/json');
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
-		$error = '';		
+		$data = $this->request->query;
+		$error = '';
 		if(!isset($data['sender_id']) || empty($data['sender_id']))
 		{
 			$error .= 'Sender id is Required. ';
@@ -2402,7 +2402,7 @@ class ApiController extends AppController {
 		{
 			$error .= 'Message is Required. ';
 		}
-							
+
 		if(!empty($error))
 		{
 			$this->response = array(
@@ -2431,13 +2431,13 @@ class ApiController extends AppController {
 		}
 		echo json_encode($this->response);
 	}
-	
+
 	public function new_message()
 	{
-		//header('Content-Type: application/json');  
+		//header('Content-Type: application/json');
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
-		$error = '';		
+		$data = $this->request->query;
+		$error = '';
 		if(!isset($data['sender_id']) || empty($data['sender_id']))
 		{
 			$error .= 'Sender id is Required. ';
@@ -2450,12 +2450,12 @@ class ApiController extends AppController {
 		{
 			$error .= 'Message is Required. ';
 		}
-		
+
 		if((isset($data['sender_id']) && isset($data['receiver_id'])) &&($data['sender_id'] == $data['receiver_id']))
 		{
 			$error .= 'Request not valid. ';
 		}
-							
+
 		if(!empty($error))
 		{
 			$this->response = array(
@@ -2467,16 +2467,16 @@ class ApiController extends AppController {
 		{
 			$this->loadModel('Conversation');
 			$this->loadModel('ConversationReply');
-			
+
 			//Update Activity Log
 			$this->loadModel('ActivityLog');
-			
+
 			$converstion = $this->Conversation->find('first',array(
 				'conditions'=>array('OR'=>array(array('Conversation.sender_id'=>$data['sender_id'],'Conversation.receiver_id'=>$data['receiver_id']),array('Conversation.sender_id'=>$data['receiver_id'],'Conversation.receiver_id'=>$data['sender_id']))),
 			));
 			//$log = $this->Conversation->getDataSource()->getLog(false, false);
-			
-				
+
+
 			$replyData['date_time'] = $data['date_time'];
 			$replyData['reply'] = $data['message'];
 			$replyData['user_id'] = $data['sender_id'];
@@ -2485,7 +2485,7 @@ class ApiController extends AppController {
 				$replyData['conversation_id'] = $converstion['Conversation']['id'];
 				$this->Conversation->id = $converstion['Conversation']['id'];
 				$this->Conversation->save();
-				
+
 				//Check this combination in activity log if found then just update that record with current timestamp
 				$checkActivity = $this->ActivityLog->find('first',array('conditions'=>array( 'ActivityLog.user_id'=>$data['sender_id'],
 																			'ActivityLog.activity_id'=>6,
@@ -2506,7 +2506,7 @@ class ApiController extends AppController {
 				if($this->Conversation->save($conData))
 				{
 					$replyData['conversation_id'] = $this->Conversation->getLastInsertID();
-					
+
 					//Update Activity Log For Sender Conversation Activity
 					$this->ActivityLog->updateLog($data['sender_id'],6,$this->Conversation->getLastInsertID(),$data['date_time']);
 					//Update Activity Log For Receiver Conversation Activity
@@ -2541,7 +2541,7 @@ class ApiController extends AppController {
 		}
 		echo json_encode($this->response);
 	}
-	
+
 	/**
 	 * Method	: message_list
 	 * Author 	: Praveen Pandey
@@ -2549,10 +2549,10 @@ class ApiController extends AppController {
 	 */
 	 public function message_list()
 	 {
-	 	//header('Content-Type: application/json');  
+	 	//header('Content-Type: application/json');
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
-		$error = '';		
+		$data = $this->request->query;
+		$error = '';
 		if(!isset($data['user_id']) || empty($data['user_id']))
 		{
 			$error .= 'User id is Required. ';
@@ -2575,16 +2575,16 @@ class ApiController extends AppController {
 									)))); */
 			$this->Conversation->hasMany['ConversationReply']['order'] = array('ConversationReply.created'=> 'DESC');
 			$this->Conversation->hasMany['ConversationReply']['limit'] = 1;
-			
+
 			$messages = $this->Conversation->find('all',array(
 						'contain' => array('Sender'=> array('id','name','image'),
 										   'Reciever'=> array('id','name','image'),
 											'ConversationReply'),
 						'conditions'=>array('OR'=>array('Conversation.sender_id'=>$data['user_id'],'Conversation.receiver_id'=>$data['user_id'])),
 						'order' => array('Conversation.modified'=>'DESC'),
-			
+
 			));
-			
+
 			$result = array();
 			if($messages)
 			{
@@ -2594,7 +2594,7 @@ class ApiController extends AppController {
 					{
 						$other_person = $msg['Reciever'];
 					}
-					else 
+					else
 					{
 						$other_person = $msg['Sender'];
 					}
@@ -2613,7 +2613,7 @@ class ApiController extends AppController {
 						'value'	=> $result,
 						'message' => 'success'
 				);
-			
+
 		}
 		echo json_encode($this->response);
 	 }
@@ -2627,7 +2627,7 @@ class ApiController extends AppController {
 	 {
 	 	//header('Content-Type: application/json');
 	 	$this->request->onlyAllow('POST');
-	 	$data = $this->request->data;
+	 	$data = $this->request->query;
 	 	$error = '';
 	 	if(!isset($data['sender_id']) || empty($data['sender_id']))
 	 	{
@@ -2650,13 +2650,13 @@ class ApiController extends AppController {
 	 		$converstion = $this->Conversation->find('first',array(
 	 				'conditions'=>array('OR'=>array(array('Conversation.sender_id'=>$data['sender_id'],'Conversation.receiver_id'=>$data['receiver_id']),array('Conversation.sender_id'=>$data['receiver_id'],'Conversation.receiver_id'=>$data['sender_id']))),
 	 		));
-	 		
+
 	 		$converstion_id = 0;
 	 		if($converstion)
 	 		{
 	 			$converstion_id = $converstion['Conversation']['id'];
 	 		}
-	 		
+
 	 		$this->loadModel('ConversationReply');
 	 		$messages = $this->ConversationReply->find('all', array(
 	 				'conditions' => array(
@@ -2669,8 +2669,8 @@ class ApiController extends AppController {
 	 				'fields' => array('ConversationReply.*','User.name','User.id','User.image')
 	 		)
 	 		);
-	 			
-	 			
+
+
 	 		$result = array();
 	 		if($messages)
 	 		{
@@ -2694,10 +2694,10 @@ class ApiController extends AppController {
 	 }
  	public function message_detaila()
 	{
-		//header('Content-Type: application/json');  
+		//header('Content-Type: application/json');
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
-		$error = '';		
+		$data = $this->request->query;
+		$error = '';
 		if(!isset($data['user_id']) || empty($data['user_id']))
 		{
 			$error .= 'User id is Required. ';
@@ -2724,11 +2724,11 @@ class ApiController extends AppController {
 																			'Conversation.receiver_id'=>$data['user_id']
 																			)
 																	),
-											'fields' => array('ConversationReply.*','User.name','User.image')																		
+											'fields' => array('ConversationReply.*','User.name','User.image')
 														)
 											);
-			
-			
+
+
 			$result = array();
 			if($messages)
 			{
@@ -2753,14 +2753,14 @@ class ApiController extends AppController {
 /**
  * Method	: add_payment_method
  * Author 	: Praveen Pandey
- * Created	: 22 Oct, 2014 * 
+ * Created	: 22 Oct, 2014 *
  */
  	public function add_payment_method()
 	{
-		//header('Content-Type: application/json');  
+		//header('Content-Type: application/json');
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
-		$error = '';		
+		$data = $this->request->query;
+		$error = '';
 		if(!isset($data['user_id']) || empty($data['user_id']))
 		{
 			$error .= 'User id is Required. ';
@@ -2784,7 +2784,7 @@ class ApiController extends AppController {
 		{
 			$this->loadModel('PaymentMethod');
 			$this->PaymentMethod->create();
-			if($this->PaymentMethod->save($this->request->data))
+			if($this->PaymentMethod->save($this->request->query))
 			{
 				$this->response = array(
 							'status' => 1,
@@ -2801,7 +2801,7 @@ class ApiController extends AppController {
 		}
 		echo json_encode($this->response);
 	}
-	
+
 	/**
 	 * Method	: get_payment_detail
 	 * Author 	: Praveen Pandey
@@ -2809,10 +2809,10 @@ class ApiController extends AppController {
 	 */
 	 public function get_payment_detail()
 	 {
-	 	//header('Content-Type: application/json');  
+	 	//header('Content-Type: application/json');
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
-		$error = '';		
+		$data = $this->request->query;
+		$error = '';
 		if(!isset($data['user_id']) || empty($data['user_id']))
 		{
 			$error .= 'User id is Required. ';
@@ -2871,10 +2871,10 @@ class ApiController extends AppController {
 	 */
 	 public function update_payment_detail()
 	 {
-	 	//header('Content-Type: application/json');  
+	 	//header('Content-Type: application/json');
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
-		$error = '';		
+		$data = $this->request->query;
+		$error = '';
 		if(!isset($data['user_id']) || empty($data['user_id']))
 		{
 			$error .= 'User id is Required. ';
@@ -2889,7 +2889,7 @@ class ApiController extends AppController {
 		else
 		{
 			$userData['id'] = $data['user_id'];
-			
+
 			/*if(isset($data['bank_account_number'])) { $userData['bank_acc_no'] = $data['bank_account_number']; }
 			if(isset($data['routing_number'])) { $userData['bank_routing_no'] = $data['routing_number']; }
 			if(isset($data['account_holder_name'])) { $userData['bank_acc_holdername'] =  $data['account_holder_name']; }
@@ -2898,7 +2898,7 @@ class ApiController extends AppController {
 
 			if(isset($data['stripe_user_id'])) { $userData['stripe_user_id'] = $data['stripe_user_id']; }
 			if(isset($data['stripe_publish_id'])) { $userData['stripe_publish_id'] =  $data['stripe_publish_id']; }
-			
+
 			$this->loadModel('User');
 			if($this->User->save($userData))
 			{
@@ -2954,10 +2954,10 @@ class ApiController extends AppController {
 	 */
  	public function delete_payment_method()
 	{
-		//header('Content-Type: application/json');  
+		//header('Content-Type: application/json');
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
-		$error = '';		
+		$data = $this->request->query;
+		$error = '';
 		if(!isset($data['user_id']) || empty($data['user_id']))
 		{
 			$error .= 'User id is Required. ';
@@ -2978,7 +2978,7 @@ class ApiController extends AppController {
 			$this->loadModel('User');
 			$this->loadModel('PaymentMethod');
 			$this->PaymentMethod->deleteAll(array('PaymentMethod.user_id'=>$data['user_id'],'PaymentMethod.id'=>$data['paymethod_id']));
-			
+
 			$methods = $this->PaymentMethod->find('all',array(
 													'conditions' => array('PaymentMethod.user_id' => $data['user_id'])
 														)
@@ -3019,10 +3019,10 @@ class ApiController extends AppController {
 	 */
 	 public function add_to_wishlist()
 	 {
-	 	//header('Content-Type: application/json');  
+	 	//header('Content-Type: application/json');
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
-		$error = '';		
+		$data = $this->request->query;
+		$error = '';
 		if(!isset($data['user_id']) || empty($data['user_id']))
 		{
 			$error .= 'User id is Required. ';
@@ -3060,7 +3060,7 @@ class ApiController extends AppController {
 		    {
 		    	$this->Wishlist->save($data);
 		    }
-			
+
 			$wishlists = $this->Wishlist->find('all',array(
 													'conditions' => array('Wishlist.user_id'=>$data['user_id']),
 													'recursive' => 2,
@@ -3102,19 +3102,19 @@ class ApiController extends AppController {
 	 }
 
 	/**
-	 * 
+	 *
 	 */
 	 public function kitchen_dishes()
 	 {
-	 	//header('Content-Type: application/json');  
+	 	//header('Content-Type: application/json');
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
-		$error = '';		
+		$data = $this->request->query;
+		$error = '';
 		if(empty($data['kitchen_id']))
 		{
 			$error .= 'Kitchen id is Required. ';
 		}
-		
+
 		if(!empty($error))
 		{
 			$this->response = array(
@@ -3131,7 +3131,7 @@ class ApiController extends AppController {
 													'conditions'=> array('Kitchen.id'=>$data['kitchen_id']),
 													'fields' => array('Kitchen.*','User.image','User.is_paypal_verified','User.paypal_id')
 													));
-			
+
 			$result = array();
 			$result['is_order_placed_for_kitchen'] = 0;
 			if($kitchen)
@@ -3151,9 +3151,9 @@ class ApiController extends AppController {
 				$result['User']['is_paypal_verified'] = $kitchen['User']['is_paypal_verified'];
 				if(empty($kitchen['User']['paypal_id']))
 					$result['User']['paypal_id'] = '';
-				else	
+				else
 					$result['User']['paypal_id'] = $kitchen['User']['paypal_id'];
-				
+
 				if(!empty($kitchen['UploadImage']))
 				{
 					$i = 0;
@@ -3164,13 +3164,13 @@ class ApiController extends AppController {
 						$i++;
 					}
 				}
-				
+
 				$dishes = $this->Dish->find('all', array(
 													'conditions' => array('Dish.kitchen_id' => $data['kitchen_id'], 'Dish.status' => 'on'),
 													'contain' => array('UploadImage')
 												));
-												
-				
+
+
 				if(!empty($dishes))
 				{
 					$i = 0;
@@ -3184,7 +3184,7 @@ class ApiController extends AppController {
 								$value['Dish']['p_custom_quantity'] = '';
 								$value['Dish']['p_custom_desc'] = '';
 								$value['Dish']['p_custom_unit'] = '';
-							}	
+							}
 							$value['Dish']['image']  = (!empty($value['UploadImage'][0]['name'])) ? Router::url('/'.DISH_IMAGE_URL.$value['UploadImage'][0]['name'],true) : "";
 							$result['Dish'][] = $value['Dish'];
 						}
@@ -3202,7 +3202,7 @@ class ApiController extends AppController {
 						$r = $value['Review'];
 						$r['User'] = $value['User'];
 						$result['Review'][] = $r;
-                        if(isset($value['Review']['timestamp']) && !empty($value['Review']['timestamp'])) 
+                        if(isset($value['Review']['timestamp']) && !empty($value['Review']['timestamp']))
                         	$result['Timestamp'][] = $value['Review']['timestamp'];
                     	else
                     		$result['Timestamp'][] = strtotime($value['Review']['created']);
@@ -3217,7 +3217,7 @@ class ApiController extends AppController {
 		}
 		echo json_encode($this->response);
 	 }
-	
+
 	/**
 	 * Method	: post_review
 	 * Author	: Praveen Pandey
@@ -3226,11 +3226,11 @@ class ApiController extends AppController {
 	 */
 	public function post_review()
 	{
-		//header('Content-Type: application/json');  
+		//header('Content-Type: application/json');
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
-		$error = '';		
-                
+		$data = $this->request->query;
+		$error = '';
+
 		if(empty($data['kitchen_id']))
 		{
 			$error .= 'Kitchen id is Required. ';
@@ -3293,7 +3293,7 @@ class ApiController extends AppController {
 							'status' => 2,
 							'message' => 'Error, Please try again'
 						);
-				}	
+				}
 			}
 		}
 		echo json_encode($this->response);
@@ -3307,7 +3307,7 @@ class ApiController extends AppController {
 	{
 		//header('Content-Type: application/json');
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
+		$data = $this->request->query;
 		$error = '';
 		if(empty($data['name']))
 		{
@@ -3325,7 +3325,7 @@ class ApiController extends AppController {
 		{
 			$error .= 'Please select your country. ';
 		}
-		
+
 		if(!empty($error))
 		{
 			$this->response = array(
@@ -3348,7 +3348,7 @@ class ApiController extends AppController {
 					$error_msg = 'Phone number already in use. Please enter another phone number.';
 					$this->response = array(
 							'status' => 2,
-							'message' => $error_msg 
+							'message' => $error_msg
 					);
 				}
 				else
@@ -3398,7 +3398,7 @@ class ApiController extends AppController {
 									'message' => 'Error, Please try again'
 							);
 						}
-					
+
 					}
 					catch (Exception $e)
 					{
@@ -3407,7 +3407,7 @@ class ApiController extends AppController {
 						$error_msg = str_replace('From number:', '', $error_msg);
 						$this->response = array(
 								'status' => 2,
-								'message' => $error_msg 
+								'message' => $error_msg
 						);
 					}
 				}
@@ -3415,7 +3415,7 @@ class ApiController extends AppController {
 		}
 		echo json_encode($this->response);
 	}
-	
+
 	/**
 	 * Method	: validate_verification
 	 * Author	: Praveen pandey
@@ -3425,7 +3425,7 @@ class ApiController extends AppController {
 	{
 		//header('Content-Type: application/json');
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
+		$data = $this->request->query;
 		$error = '';
 		if(empty($data['mobile']))
 		{
@@ -3439,7 +3439,7 @@ class ApiController extends AppController {
 		{
 			$error .= 'User id is Required. ';
 		}
-	
+
 		if(!empty($error))
 		{
 			$this->response = array(
@@ -3464,10 +3464,10 @@ class ApiController extends AppController {
 					$Email = new CakeEmail('smtp');
 
 					$this->loadModel('EmailTemplate');
-					
+
 					$arr = array();
 					$arr['{{user}}'] = $user['User']['name'];
-					
+
 					$email_content = $this->EmailTemplate->findBySlug('account-verify');
 
 					$content = $email_content['EmailTemplate']['content'];
@@ -3488,7 +3488,7 @@ class ApiController extends AppController {
 							'message' => "You have successfully verified"
 					);
 				}
-				else 
+				else
 				{
 					$this->response = array(
 							'status' => 2,
@@ -3496,7 +3496,7 @@ class ApiController extends AppController {
 					);
 				}
 			}
-			else 
+			else
 			{
 				$this->response = array(
 										'status' => 2,
@@ -3506,25 +3506,25 @@ class ApiController extends AppController {
 		}
 		echo json_encode($this->response);//592746
 	}
-        
+
         /*
          * Purpose: To get wishlist of a user
          * @Created: Sandeep Jain
          * @Date: 01 Dec 14
-         * @Parameters: user_id (int) 
+         * @Parameters: user_id (int)
          * @Response: Wishlist data in json format
          */
-        
+
         function wishlist()
         {
-            //header('Content-Type: application/json');  
+            //header('Content-Type: application/json');
             $this->request->onlyAllow('POST');
-            $data = $this->request->data;
-            $error = '';		
+            $data = $this->request->query;
+            $error = '';
             if(!isset($data['user_id']) || empty($data['user_id']))
             {
                     $error .= 'User id is Required. ';
-            }            
+            }
             if(!empty($error))
             {
                 $this->response = array(
@@ -3534,7 +3534,7 @@ class ApiController extends AppController {
             }
             else
             {
-                $this->loadModel('Wishlist');                
+                $this->loadModel('Wishlist');
                 $wishlists = $this->Wishlist->find('all',array(
                                                     'conditions' => array('Wishlist.user_id'=>$data['user_id']),
                                                     'contain' => array('Dish'=>array('name', 'serve_start_time', 'serve_end_time', 'lead_time', 'status'),'Dish.UploadImage','Dish.Kitchen'=>array('name')),
@@ -3570,7 +3570,7 @@ class ApiController extends AppController {
             }
             echo json_encode($this->response);
         }
-        
+
         /*
          * Purpose: To remove wishlist ofa user according to the id
          * @Created: Sandeep Jain
@@ -3578,13 +3578,13 @@ class ApiController extends AppController {
          * @Parameters: user_id (int) and wish_id (int)
          * @Response: request data in json format
          */
-        
+
         function removewish()
         {
-            //header('Content-Type: application/json');  
+            //header('Content-Type: application/json');
             $this->request->onlyAllow('POST');
-            $data = $this->request->data;
-            $error = '';		
+            $data = $this->request->query;
+            $error = '';
             if(!isset($data['user_id']) || empty($data['user_id']))
             {
                 $error .= 'User id is Required. ';
@@ -3592,7 +3592,7 @@ class ApiController extends AppController {
             if(!isset($data['wish_id']) || empty($data['wish_id']))
             {
                 $error .= 'wish id is Required. ';
-            }            
+            }
             if(!empty($error))
             {
                 $this->response = array(
@@ -3602,7 +3602,7 @@ class ApiController extends AppController {
             }
             else
             {
-               $this->loadModel('Wishlist');               
+               $this->loadModel('Wishlist');
                $chk = $this->Wishlist->find('first', array('conditions' => array('Wishlist.user_id'=>$data['user_id'], 'Wishlist.id'=>$data['wish_id'])));
                if (!empty($chk))
                {
@@ -3610,7 +3610,7 @@ class ApiController extends AppController {
                    $this->Wishlist->delete();
                    $this->response = array(
                             'status' => 200,
-                            'message' => 'Wish has been deleted successfully',                            
+                            'message' => 'Wish has been deleted successfully',
                     );
                }
                else
@@ -3620,11 +3620,11 @@ class ApiController extends AppController {
                             'message' => 'Permission denide'
                     );
                }
-                       
+
             }
             echo json_encode($this->response);
         }
-        
+
         /*
          * Purpose: New request API for dishes
          * @Created: Sandeep Jain
@@ -3632,13 +3632,13 @@ class ApiController extends AppController {
          * @Parameters: user_id (int) and dish_name (varchar), message (text) and allergies_id (command separated integer values)
          * @Response: success or failed
          */
-        
+
         function newrequest()
         {
-            //header('Content-Type: application/json');  
+            //header('Content-Type: application/json');
             $this->request->onlyAllow('POST');
-            $data = $this->request->data;
-            $error = '';		
+            $data = $this->request->query;
+            $error = '';
             if(!isset($data['user_id']) || empty($data['user_id']))
             {
                 $error .= 'User id is Required. ';
@@ -3646,15 +3646,15 @@ class ApiController extends AppController {
             if(!isset($data['dish_name']) || empty($data['dish_name']))
             {
                 $error .= 'Dish name is Required. ';
-            }             
+            }
             if(!isset($data['message']) || empty($data['message']))
             {
                 $error .= 'Message is Required. ';
-            } 
+            }
             if(!isset($data['cuisine_id']) || empty($data['cuisine_id']))
             {
                 $error .= 'Cuisine is Required. ';
-            } 
+            }
             if(!isset($data['timestamp']) || empty($data['timestamp']))
             {
                 $error .= 'Timestamp is Required. ';
@@ -3666,7 +3666,7 @@ class ApiController extends AppController {
             if(!isset($data['lng']) || empty($data['lng']))
             {
                 $error .= 'Location longitude is Required. ';
-            } 
+            }
             if(!empty($error))
             {
                 $this->response = array(
@@ -3676,9 +3676,9 @@ class ApiController extends AppController {
             }
             else
             {
-               $this->loadModel('Request');               
+               $this->loadModel('Request');
                $ins_data = array();
-               $ins_data['Request']['user_id'] = $data['user_id'];               
+               $ins_data['Request']['user_id'] = $data['user_id'];
                $ins_data['Request']['dish_name'] = $data['dish_name'];
                $ins_data['Request']['message'] = $data['message'];
                $ins_data['Request']['allergies'] = $data['allergies_id'];
@@ -3691,21 +3691,21 @@ class ApiController extends AppController {
                {
                    $this->response = array(
                             'status' => 1,
-                            'message' => "Request has been submitted successauly",                           
+                            'message' => "Request has been submitted successauly",
                     );
                }
                else
                {
                    $this->response = array(
                             'status' => 2,
-                            'message' => "Oops.. server busy this time",                           
+                            'message' => "Oops.. server busy this time",
                     );
                }
-                       
+
             }
             echo json_encode($this->response);
         }
-        
+
         /*
          * Purpose: Myrequest API, It will return requests of a user
          * @Created: Sandeep Jain
@@ -3713,17 +3713,17 @@ class ApiController extends AppController {
          * @Parameters: user_id (int)
          * @Response: users request in json fomrat
          */
-        
+
         function myrequest()
         {
-            //header('Content-Type: application/json');  
+            //header('Content-Type: application/json');
             $this->request->onlyAllow('POST');
-            $data = $this->request->data;
-            $error = '';		
+            $data = $this->request->query;
+            $error = '';
             if(!isset($data['user_id']) || empty($data['user_id']))
             {
                 $error .= 'User id is Required. ';
-            }            
+            }
             if(!empty($error))
             {
                 $this->response = array(
@@ -3742,7 +3742,7 @@ class ApiController extends AppController {
                    $offset = 0;
                }
 
-               $this->loadModel('Request');               
+               $this->loadModel('Request');
                $req = $this->Request->find('all', array('conditions'=>array('Request.user_id '=>$data['user_id']), 'order'=>'Request.id desc','limit'=>$this->limit, 'offset'=>$offset, 'recursive'=>2, 'contain'=>array('User'=>array('id','name','image'), 'RequestAnswer.Dish'=>array('name','kitchen_id','id','status','created'), 'RequestAnswer.Dish.Kitchen'=>array('id','name'), 'RequestAnswer.Dish.UploadImage'=>array('name')) ));
                //pr($req); exit;
                $req2 = $this->Request->find('all', array('conditions'=>array('Request.user_id '=>$data['user_id']),  'recursive'=>2, 'contain'=>array('User'=>array('id','name','image'), 'RequestAnswer.Dish'=>array('name','kitchen_id','id','status','created'), 'RequestAnswer.Dish.Kitchen'=>array('id','name'), 'RequestAnswer.Dish.UploadImage'=>array('name')) ));
@@ -3751,21 +3751,21 @@ class ApiController extends AppController {
                {
                    $i=0;
                    foreach ($req as $rq)
-                   {                         
+                   {
                         $ret['Request'][$i]['dish_name'] = $rq['Request']['id'];
                         $ret['Request'][$i]['dish_name'] = $rq['Request']['dish_name'];
                         $ret['Request'][$i]['message'] = $rq['Request']['message'];
                         $ret['Request'][$i]['allergies'] = $rq['Request']['allergies'];
                         $ret['Request'][$i]['cuisine_id'] = $rq['Request']['cuisine_id'];
-                       
-                        if(isset($rq['Request']['timestamp']) && !empty($rq['Request']['timestamp'])) 
+
+                        if(isset($rq['Request']['timestamp']) && !empty($rq['Request']['timestamp']))
 		                	$ret['Request'][$i]['timestamp'] = $rq['Request']['timestamp'];
 		            	else
 		            		$ret['Request'][$i]['timestamp'] = strtotime($rq['Request']['timestamp']);
-				
+
                         ///$ret['Request'][$i]['serve_start_time'] = $rq['RequestAnswer']['Dish']['serve_start_time'];
                         //$ret['Request'][$i]['serve_start'] = $rq['RequestAnswer']['Dish']['serve_start'];
-                        $ret['Request'][$i]['request_id'] = $rq['Request']['id'];  
+                        $ret['Request'][$i]['request_id'] = $rq['Request']['id'];
                         $ret['Request'][$i]['user_name'] = $rq['User']['name'];
                         $ret['Request'][$i]['user_id'] = $rq['User']['id'];
                         $ret['Request'][$i]['image'] = ($rq['User']['image'] != "") ? Router::url('/'.PROFILE_IMAGE_URL.$rq['User']['image'],true) : '';
@@ -3774,7 +3774,7 @@ class ApiController extends AppController {
                             foreach ($rq['RequestAnswer'] as $ra)
                             {
                                 //pr($ra); exit;
-                                $ret['Request'][$i]['Answer'][] = array('dish_id'=>$ra['dish_id'], 'answer_id'=>$ra['id'], 'kitchen_id'=>$ra['Dish']['kitchen_id'], 'serve_start_time'=>$ra['Dish']['serve_start_time'], 'serve_start'=>$ra['Dish']['serve_start'], 'kitchen_name'=>$ra['Dish']['Kitchen']['name'], 'dish_name'=>$ra['Dish']['name'], 'serve_end_time'=>$ra['Dish']['serve_end_time'], 'serve_end'=>$ra['Dish']['serve_end'], 'lead_time'=>$ra['Dish']['lead_time'], 'availability'=>$ra['Dish']['status'], 'servertime'=>$ra['Dish']['created'], 'photo' => isset($ra['Dish']['UploadImage']['0']['name']) ? Router::url('/'.$ra['Dish']['UploadImage']['0']['name'],true) : ''); 
+                                $ret['Request'][$i]['Answer'][] = array('dish_id'=>$ra['dish_id'], 'answer_id'=>$ra['id'], 'kitchen_id'=>$ra['Dish']['kitchen_id'], 'serve_start_time'=>$ra['Dish']['serve_start_time'], 'serve_start'=>$ra['Dish']['serve_start'], 'kitchen_name'=>$ra['Dish']['Kitchen']['name'], 'dish_name'=>$ra['Dish']['name'], 'serve_end_time'=>$ra['Dish']['serve_end_time'], 'serve_end'=>$ra['Dish']['serve_end'], 'lead_time'=>$ra['Dish']['lead_time'], 'availability'=>$ra['Dish']['status'], 'servertime'=>$ra['Dish']['created'], 'photo' => isset($ra['Dish']['UploadImage']['0']['name']) ? Router::url('/'.$ra['Dish']['UploadImage']['0']['name'],true) : '');
                             }
                         }
                         $i++;
@@ -3784,11 +3784,11 @@ class ApiController extends AppController {
                         'status' => 1,
                         'message' => "user's request found",
                         'value' => $ret,
-                );       
+                );
             }
             echo json_encode($this->response);
         }
-        
+
         /*
          * Purpose: Request list API will send all requests of all users except current one
          * @Created: Sandeep Jain
@@ -3796,17 +3796,17 @@ class ApiController extends AppController {
          * @Parameters: user_id (int)
          * @Response: requests array in json formatted
          */
-        
+
         function requestlist()
         {
-            //header('Content-Type: application/json');  
+            //header('Content-Type: application/json');
             $this->request->onlyAllow('POST');
-            $data = $this->request->data;
-            $error = '';		
+            $data = $this->request->query;
+            $error = '';
             if(!isset($data['user_id']) || empty($data['user_id']))
             {
                 $error .= 'User id is Required. ';
-            }            
+            }
             if(!empty($error))
             {
                 $this->response = array(
@@ -3825,10 +3825,10 @@ class ApiController extends AppController {
                {
                    $offset = 0;
                }
-               $this->loadModel('Request');               
+               $this->loadModel('Request');
 		       $this->loadModel('User');
 		       $userDetails = $this->User->findById($data['user_id']);
-		      
+
 		       $waitingForAns = '';
 		       $ret = array('total'=>0);
 		       if(isset($userDetails['Kitchen']['id']) && !empty($userDetails['Kitchen']['id']))
@@ -3857,20 +3857,20 @@ class ApiController extends AppController {
 		                                                                    'RequestAnswer.Dish.UploadImage'=>array('name'))
 		                                                                  )
 		                                            );
-				
+
 		       }
 
                $i=0;
                if (!empty($waitingForAns))
                {
                    foreach ($waitingForAns as $rq)
-                   {                         
+                   {
                         $ret['Request'][$i]['dish_name'] = $rq['Request']['dish_name'];
                         $ret['Request'][$i]['message'] = $rq['Request']['message'];
                         $ret['Request'][$i]['allergies'] = $rq['Request']['allergies'];
                         $ret['Request'][$i]['cuisine_id'] = $rq['Request']['cuisine_id'];
                         $ret['Request'][$i]['timestamp'] = $rq['Request']['timestamp'];
-                        $ret['Request'][$i]['request_id'] = $rq['Request']['id'];  
+                        $ret['Request'][$i]['request_id'] = $rq['Request']['id'];
                         $ret['Request'][$i]['user_name'] = $rq['User']['name'];
                         $ret['Request'][$i]['user_id'] = $rq['User']['id'];
                         $ret['Request'][$i]['image'] = ($rq['User']['image'] != "") ? Router::url('/'.PROFILE_IMAGE_URL.$rq['User']['image'],true) : '';
@@ -3879,7 +3879,7 @@ class ApiController extends AppController {
                         {
                             foreach ($rq['RequestAnswer'] as $ra)
                             {
-                                $ret['Request'][$i]['Answer'][] = array('dish_id'=>$ra['dish_id'], 'timestamp'=>$ra['timestamp'],'answer_id'=>$ra['id'], 'kitchen_id'=>$ra['Dish']['kitchen_id'], 'kitchen_name'=>$ra['Dish']['Kitchen']['name'], 'dish_name'=>$ra['Dish']['name'], 'availability'=>$ra['Dish']['status'], 'servertime'=>$ra['Dish']['created'], 'photo' => isset($ra['Dish']['UploadImage']['0']['name']) ? Router::url('/'.$ra['Dish']['UploadImage']['0']['name'],true) : ''); 
+                                $ret['Request'][$i]['Answer'][] = array('dish_id'=>$ra['dish_id'], 'timestamp'=>$ra['timestamp'],'answer_id'=>$ra['id'], 'kitchen_id'=>$ra['Dish']['kitchen_id'], 'kitchen_name'=>$ra['Dish']['Kitchen']['name'], 'dish_name'=>$ra['Dish']['name'], 'availability'=>$ra['Dish']['status'], 'servertime'=>$ra['Dish']['created'], 'photo' => isset($ra['Dish']['UploadImage']['0']['name']) ? Router::url('/'.$ra['Dish']['UploadImage']['0']['name'],true) : '');
                             }
                         }
                         $i++;
@@ -3890,11 +3890,11 @@ class ApiController extends AppController {
                         'status' => 1,
                         'message' => "user's request found",
                         'value' => $ret,
-                );       
+                );
             }
             echo json_encode($this->response);
         }
-        
+
         /*
          * Purpose: Myrequest API,delete request
          * @Created: Sandeep Jain
@@ -3902,13 +3902,13 @@ class ApiController extends AppController {
          * @Parameters: user_id (int) and request_id (int)
          * @Response: success or failed message
          */
-        
+
         function deleterequest()
         {
-            //header('Content-Type: application/json');  
+            //header('Content-Type: application/json');
             $this->request->onlyAllow('POST');
-            $data = $this->request->data;
-            $error = '';		
+            $data = $this->request->query;
+            $error = '';
             if(!isset($data['user_id']) || empty($data['user_id']))
             {
                 $error .= 'User id is Required. ';
@@ -3927,7 +3927,7 @@ class ApiController extends AppController {
             else
             {
                $this->loadModel('Request');
-               $chk = $this->Request->find('first', array('conditions'=>array('Request.user_id'=>$data['user_id'], 'Request.id'=>$data['request_id'])));               
+               $chk = $this->Request->find('first', array('conditions'=>array('Request.user_id'=>$data['user_id'], 'Request.id'=>$data['request_id'])));
                if (!empty($chk))
                {
                    $this->Request->id = $data['request_id'];
@@ -3945,7 +3945,7 @@ class ApiController extends AppController {
                         'message' => "Error occured.. Please try after some time"
                        );
                    }
-              
+
                 }
                 else
                 {
@@ -3957,7 +3957,7 @@ class ApiController extends AppController {
             }
             echo json_encode($this->response);
         }
-        
+
         /*
          * Purpose: To answer of a request
          * @Created: Sandeep Jain
@@ -3965,13 +3965,13 @@ class ApiController extends AppController {
          * @Parameters: user_id (int) and dish_id (int), request_id (int)
          * @Response: success or failed
          */
-        
+
         function answer_request()
         {
-            //header('Content-Type: application/json');  
+            //header('Content-Type: application/json');
             $this->request->onlyAllow('POST');
-            $data = $this->request->data;
-            $error = '';		
+            $data = $this->request->query;
+            $error = '';
             if(!isset($data['user_id']) || empty($data['user_id']))
             {
                 $error .= 'User id is Required. ';
@@ -3983,7 +3983,7 @@ class ApiController extends AppController {
             if(!isset($data['request_id']) || empty($data['request_id']))
             {
                 $error .= 'Request id is Required. ';
-            }   
+            }
             else
             {
                 $this->loadModel('Request');
@@ -3996,7 +3996,7 @@ class ApiController extends AppController {
             if(!isset($data['dish_id']) || empty($data['dish_id']))
             {
                 $error .= 'Dish id is Required. ';
-            } 
+            }
             else
             {
                 $this->loadModel('Dish');
@@ -4016,36 +4016,36 @@ class ApiController extends AppController {
             }
             else
             {
-               $this->loadModel('RequestAnswer');               
+               $this->loadModel('RequestAnswer');
                $checkAnswer = $this->RequestAnswer->find('count',array('conditions'=>array('RequestAnswer.user_id'=>$data['user_id'],'RequestAnswer.request_id'=>$data['request_id'],'RequestAnswer.dish_id'=>$data['dish_id'])));
                if(!$checkAnswer)
                {
 	               $ins_data = array();
-	               $ins_data['RequestAnswer']['user_id'] = $data['user_id'];               
+	               $ins_data['RequestAnswer']['user_id'] = $data['user_id'];
 	               $ins_data['RequestAnswer']['request_id'] = $data['request_id'];
-	               $ins_data['RequestAnswer']['dish_id'] = $data['dish_id']; 
-	               $ins_data['RequestAnswer']['timestamp'] = $data['timestamp'];        
+	               $ins_data['RequestAnswer']['dish_id'] = $data['dish_id'];
+	               $ins_data['RequestAnswer']['timestamp'] = $data['timestamp'];
 	               $this->RequestAnswer->create();
-	               
+
 
 	               if ($this->RequestAnswer->save($ins_data))
-	               {	
+	               {
 	               		$this->loadModel('ActivityLog');
 						//Update Activity Log For Answer Request Activity
 						$this->ActivityLog->updateLog($chk['Request']['user_id'],7,$this->RequestAnswer->getLastInsertID(),$data['timestamp']);
-						
+
 						$message['_message']['m'] = "Your dish request ".$chk['Request']['dish_name']." has been answered by ".$chkDish['Kitchen']['name'];
 	               		$pushNoti = $this->Push->send($chk['Request']['user_id'],$message,$chkDish['Kitchen']['id'],1);
 	                   	$this->response = array(
 	                            'status' => 1,
-	                            'message' => "Answer has been submitted successauly",                           
+	                            'message' => "Answer has been submitted successauly",
 	                    );
 	               }
 	               else
 	               {
 	                   $this->response = array(
 	                            'status' => 2,
-	                            'message' => "Oops.. server busy this time",                           
+	                            'message' => "Oops.. server busy this time",
 	                    );
 	               }
 	           }
@@ -4053,18 +4053,18 @@ class ApiController extends AppController {
 	           {
 	           		$this->response = array(
 	                            'status' => 2,
-	                            'message' => "This answer has been already added.",                           
+	                            'message' => "This answer has been already added.",
 	                    );
 	           }
-	                       
+
             }
             echo json_encode($this->response);
         }
-        
+
         function testMy()
         {
         	//$message['_message']['m'] = "Hello neetika this one is for testing";
-	               		
+
         	//$pushNoti = $this->Push->send(111,$message,38);
         }
         /*
@@ -4074,13 +4074,13 @@ class ApiController extends AppController {
          * @Parameters: user_id (int)
          * @Response: payment detils in json format
          */
-        
+
         function get_payment_details()
         {
-            //header('Content-Type: application/json');  
+            //header('Content-Type: application/json');
             $this->request->onlyAllow('POST');
-            $data = $this->request->data;
-            $error = '';		
+            $data = $this->request->query;
+            $error = '';
             if(!isset($data['user_id']) || empty($data['user_id']))
             {
                 $error .= 'User id is Required. ';
@@ -4093,42 +4093,42 @@ class ApiController extends AppController {
                 );
             }
             else
-            {             
+            {
                $rec = array();
                $ret = array();
                $pay = array();
-               
+
                $this->loadModel('User');
                $det = $this->User->findById($data['user_id'], array('User.bank_acc_no', 'User.bank_routing_no', 'User.bank_acc_holdername', 'User.bank_acc_type', 'User.paypal_id', 'User.paypal_name','User.paypal_lname','User.is_paypal_verified', 'User.stripe_user_id', 'User.stripe_publish_id'));
                if (!empty($det))
                {
                    $rec = array('Bank_account_number'=>$det['User']['bank_acc_no'], 'Bank_routing_number'=>$det['User']['bank_routing_no'], 'Bank_account_holder_name'=>$det['User']['bank_acc_holdername'] , 'Bank_account_type'=>$det['User']['bank_acc_type'], 'Paypal_id'=>$det['User']['paypal_id'], 'Paypal_name'=>$det['User']['paypal_name'], 'Paypal_lname'=>$det['User']['paypal_lname'], 'is_verified'=>$det['User']['is_paypal_verified'], 'stripe_user_id'=>$det['User']['stripe_user_id'], 'stripe_publish_id'=>$det['User']['stripe_publish_id']);
-               }         
-               
+               }
+
                $this->loadModel('PaymentMethod');
                $det = $this->PaymentMethod->findAllByUserId($data['user_id']);
-               
+
                if (!empty($det))
                {
                    foreach ($det as $de)
-                   { 
+                   {
                       $pay[] = array('card_id'=>$de['PaymentMethod']['id'], 'card_no'=>$de['PaymentMethod']['card_no'], 'type'=>$de['PaymentMethod']['type'], 'exp_month'=>$de['PaymentMethod']['exp_month'], 'exp_year'=>$de['PaymentMethod']['exp_year'], 'card_name'=>$de['PaymentMethod']['card_name']);
                    }
                }
-               
+
                $ret['Receipt'] = $rec;
-               $ret['Payment'] = $pay;             
-               
+               $ret['Payment'] = $pay;
+
                 $this->response = array(
                          'status' => 1,
                          'message' => "Payment details found",
                          'value' => $ret
-                 );              
-                       
+                 );
+
             }
             echo json_encode($this->response);
         }
-        
+
         /*
          * Purpose: update payment detils
          * @Created: Sandeep Jain
@@ -4136,13 +4136,13 @@ class ApiController extends AppController {
          * @Parameters: user_id (int) and back info
          * @Response: payment detils in json format
          */
-        
+
         function update_payment_details()
         {
-            //header('Content-Type: application/json');  
+            //header('Content-Type: application/json');
             $this->request->onlyAllow('POST');
-            $data = $this->request->data;
-            $error = '';		
+            $data = $this->request->query;
+            $error = '';
             if(!isset($data['user_id']) || empty($data['user_id']))
             {
                 $error .= 'User id is Required. ';
@@ -4155,7 +4155,7 @@ class ApiController extends AppController {
                 );
             }
             else
-            {             
+            {
                $b_ac_no = "";
                $b_routing = "";
                $b_holder = "";
@@ -4177,8 +4177,8 @@ class ApiController extends AppController {
                if (isset($data['Bank_account_type']))
                {
                    $b_type = $data['Bank_account_type'];
-               } 
-               */           
+               }
+               */
                if (isset($data['stripe_user_id']))
                {
                    $stripe_user_id = $data['stripe_user_id'];
@@ -4186,7 +4186,7 @@ class ApiController extends AppController {
                if (isset($data['stripe_publish_id']))
                {
                    $stripe_publish_id = $data['stripe_publish_id'];
-               } 
+               }
 
                $this->loadModel('User');
                $ins = array();
@@ -4198,7 +4198,7 @@ class ApiController extends AppController {
                */
                $ins['User']['stripe_user_id'] = $stripe_user_id;
                $ins['User']['stripe_publish_id'] = $stripe_publish_id;
-               
+
                if ($this->User->save($ins) )
                {
                     $status = 1;
@@ -4208,18 +4208,18 @@ class ApiController extends AppController {
                {
                     $status = 2;
                     $message = "Payment information has not been saved";
-               }                        
-               
+               }
+
                $rec = array();
                $ret = array();
-               $pay = array();              
-               
+               $pay = array();
+
                $det = $this->User->findById($data['user_id'], array('User.bank_acc_no', 'User.bank_routing_no', 'User.bank_acc_holdername', 'User.bank_acc_type', 'User.stripe_user_id', 'User.stripe_publish_id'));
                if (!empty($det))
                {
                    $rec = array('Bank_account_number'=>$det['User']['bank_acc_no'], 'Bank_routing_number'=>$det['User']['bank_routing_no'], 'Bank_account_holder_name'=>$det['User']['bank_acc_holdername'], 'Bank_account_type'=>$det['User']['bank_acc_type'], 'stripe_user_id'=>$det['User']['stripe_user_id'], 'stripe_publish_id'=>$det['User']['stripe_publish_id']);
-               }         
-               
+               }
+
                $this->loadModel('PaymentMethod');
                $det = $this->PaymentMethod->findAllByUserId($data['user_id']);
                if (!empty($det))
@@ -4229,22 +4229,22 @@ class ApiController extends AppController {
                        $pay[] = array('card_no'=>$de['card_no'], 'type'=>$de['type'],'exp_month'=>$de['exp_month'],'exp_year'=>$de['exp_year']);
                    }
                }
-               
+
                $ret['Receipt'] = $rec;
-               $ret['Payment'] = $pay;             
-               
-              
+               $ret['Payment'] = $pay;
+
+
                 $this->response = array(
                      'status' => $status,
                      'message' => $message,
                      'value' => $ret
-                 );    
-                                      
-                       
+                 );
+
+
             }
             echo json_encode($this->response);
         }
-        
+
          /*
          * Purpose: delete payment card details from user's account
          * @Created: Sandeep Jain
@@ -4252,13 +4252,13 @@ class ApiController extends AppController {
          * @Parameters: user_id (int) and card_id in int
          * @Response: payment detils in json format
          */
-        
+
         function delete_card_details()
         {
-            //header('Content-Type: application/json');  
+            //header('Content-Type: application/json');
             $this->request->onlyAllow('POST');
-            $data = $this->request->data;
-            $error = '';		
+            $data = $this->request->query;
+            $error = '';
             if(!isset($data['user_id']) || empty($data['user_id']))
             {
                 $error .= 'User id is Required. ';
@@ -4275,7 +4275,7 @@ class ApiController extends AppController {
                 );
             }
             else
-            {  
+            {
                $this->loadModel('PaymentMethod');
                $chk = $this->PaymentMethod->find('first', array('conditions'=>array('PaymentMethod.user_id'=>$data['user_id'], 'PaymentMethod.id'=> 'card_type_id')));
                if (!empty($chk))
@@ -4296,19 +4296,19 @@ class ApiController extends AppController {
                {
                    $message = "Unauthorize access. Permission denide";
                    $status = 2;
-               } 
-                              
+               }
+
                $rec = array();
                $ret = array();
-               $pay = array();              
+               $pay = array();
                $this->loadModel('User');
                $det = $this->User->findById($data['user_id'], array('User.bank_acc_no', 'User.bank_routing_no', 'User.bank_acc_holdername', 'User.bank_acc_type', 'User.stripe_user_id', 'User.stripe_publish_id'));
                if (!empty($det))
                {
                    $rec = array('Bank_account_number'=>$det['User']['bank_acc_no'], 'Bank_routing_number'=>$det['User']['bank_routing_no'], 'Bank_account_holder_name'=>$det['User']['bank_acc_holdername'], 'Bank_account_type'=>$det['User']['bank_acc_type'], 'stripe_user_id'=>$det['User']['stripe_user_id'], 'stripe_publish_id'=>$det['User']['stripe_publish_id']);
-               }         
-               
-               
+               }
+
+
                $det = $this->PaymentMethod->findAllByUserId($data['user_id']);
                if (!empty($det))
                {
@@ -4317,40 +4317,40 @@ class ApiController extends AppController {
                        $pay[] = array('card_no'=>$de['card_no'], 'type'=>$de['type']);
                    }
                }
-               
+
                $ret['Receipt'] = $rec;
-               $ret['Payment'] = $pay;             
-               
-              
+               $ret['Payment'] = $pay;
+
+
                 $this->response = array(
                      'status' => $status,
                      'message' => $message,
                      'value' => $ret
-                 );    
+                 );
             }
             echo json_encode($this->response);
         }
-        
+
         /*
          * Purpose: submit order api
          * @Created: Sandeep Jain
          * @Date: 05 Dec 14
          * @Parameters: user_id (int) and card_id in int
          * @Response: sucess or failed message
-         * 
+         *
          * Updated on :17 Dec 14
          * Updated by: Bharat Borana
          * Purpose: Order confirmation code on message and save card details
          */
-        
+
         function submit_order()
         {
-            //header('Content-Type: application/json');  
+            //header('Content-Type: application/json');
             $this->request->onlyAllow('POST');
-            
-            $data = $this->request->data;
+
+            $data = $this->request->query;
  			$error = '';
- 			
+
  			if(!isset($data['user_id']) || empty($data['user_id']))
             {
                 $error .= 'User id is Required. ';
@@ -4358,7 +4358,7 @@ class ApiController extends AppController {
             if(!isset($data['amount']) || empty($data['amount']))
             {
                 $error .= 'Order amount is required. ';
-            }            
+            }
             if(!isset($data['phone']) || empty($data['phone']))
             {
                 $error .= 'Phone is required. ';
@@ -4412,7 +4412,7 @@ class ApiController extends AppController {
 			{
 				$error .= 'Please select delevery time.';
 			}
-			
+
 			if(!isset($data['service_fee']) || empty($data['service_fee']))
 			{
 				$error .= 'Service fee required.';
@@ -4463,35 +4463,35 @@ class ApiController extends AppController {
                 );
             }
             else
-            {  
+            {
                $data['dish'] = json_decode($data['dish']);
                $this->loadModel('Order');
                $dish_res = array();
 
                foreach ($data['dish'] as $dis)
-               {   
-                   $dish_res[] = array('dish_id' => $dis->dish_id, 
-                                        'kitchen_id' => $dis->kitchen_id, 
-                                        'quantity'=>$dis->quantity, 
+               {
+                   $dish_res[] = array('dish_id' => $dis->dish_id,
+                                        'kitchen_id' => $dis->kitchen_id,
+                                        'quantity'=>$dis->quantity,
                                         'price'=>$dis->price,
-                                        'type'=>$dis->type, 
-                                        'dish_name'=>$dis->dish_name,                                         
+                                        'type'=>$dis->type,
+                                        'dish_name'=>$dis->dish_name,
                                         'portion'=>$dis->portion
                                        );
-               }            
-               
+               }
+
                $inst = array(
                     'Order' => array('user_id' => $data['user_id'], 'amount'=>$data['amount'], 'sale_tax'=>$data['sale_tax'], 'service_fee'=>$data['service_fee'], 'tax_percent'=>$data['tax_percent'], 'order_value'=>$data['order_value'], /*'dine_type' => $data['dine_type'],*/ 'delivery_date' => $data['delivery_date'], 'delivery_time' => $data['delivery_time'],'kitchen_id'=>$data['kitchen_id']),
                     'OrderDish' => $dish_res,
-                    'OrderAddress' => array('order_address'=>$data['address'] , 'phone'=>$data['phone'],'delivery_location' => $data['delivery_location'], 'address_lat' => $data['address_lat'],'address_lng' => $data['address_lng']),         
+                    'OrderAddress' => array('order_address'=>$data['address'] , 'phone'=>$data['phone'],'delivery_location' => $data['delivery_location'], 'address_lat' => $data['address_lat'],'address_lng' => $data['address_lng']),
 			   );
-            
+
                //For balanced payments required details fetch
                $this->loadModel('Kitchen');
 			   $supplierData = $this->Kitchen->getKitchenDetails($data['kitchen_id']);
-			
+
 			   if(empty($error)){
-				
+
 				if($data['payment_type']==0)
 				{
 					//For Stripe Payments action
@@ -4499,9 +4499,9 @@ class ApiController extends AppController {
 					$chargeArray['amount'] = round($data['amount'],2)*100;
 					$chargeArray['currency'] = 'usd';
 					$chargeArray['description'] = "Order for ".$supplierData['Kitchen']['name']." kitchen";
-				   	
+
 				   	$paymentDone = $this->Stripe->charge($chargeArray);
-								
+
 					if($paymentDone['status']=='success')
 					    $inst['Order']['order_href']=$paymentDone['response']['id'];
 				}
@@ -4515,7 +4515,7 @@ class ApiController extends AppController {
 				$inst['Order']['payment_type']=$data['payment_type'];
 				if($paymentDone['status']=='success' || $paymentDone['status']==1)
 				{
-					
+
 				$this->Order->create();
 				if ($this->Order->SaveAssociated($inst))
 				{
@@ -4565,16 +4565,16 @@ class ApiController extends AppController {
 				$this->response = array(
 				'status' => 1,
 				'order_id' => $paymentDone['response']['id'],
-				'message' => 'Order has been placed successfully',                        
-				);    
+				'message' => 'Order has been placed successfully',
+				);
 				}
 				else
 				{
 				$this->response = array(
 				'status' => 2,
-				'message' => 'Opps.. error found. Please try later',                        
-				);    
-				}                
+				'message' => 'Opps.. error found. Please try later',
+				);
+				}
 				}
 				else
 				{
@@ -4589,9 +4589,9 @@ class ApiController extends AppController {
 					);
 			   }
             }
-            echo json_encode($this->response);        
+            echo json_encode($this->response);
         }
-        
+
         /*
          * Purpose: Order history
          * @Created: Sandeep Jain
@@ -4601,18 +4601,18 @@ class ApiController extends AppController {
          * @Parameters: user_id (int)
          * @Response: orders in json format
          */
-        
+
         function order_history()
         {
-            //header('Content-Type: application/json');  
+            //header('Content-Type: application/json');
             $this->request->onlyAllow('POST');
-            $data = $this->request->data;
-            $error = '';		
+            $data = $this->request->query;
+            $error = '';
             if(!isset($data['user_id']) || empty($data['user_id']))
             {
                 $error .= 'User id is Required. ';
-            }           
-            
+            }
+
             if(!empty($error))
             {
                 $this->response = array(
@@ -4621,7 +4621,7 @@ class ApiController extends AppController {
                 );
             }
             else
-            {               
+            {
                $results = array();
                $this->loadModel('Order');
                $this->loadModel('Kitchen');
@@ -4641,49 +4641,49 @@ class ApiController extends AppController {
 																  'recursive'=>2));
                $this->Order->Behaviors->detach('Containable');
                 if(!empty($orders_recieved)){
-				   foreach ($orders_recieved as $ord) 
+				   foreach ($orders_recieved as $ord)
 				   {
 					   $mainArray = array();
 					   if(isset($ord['Order']) && isset($ord['OrderDish']) && !empty($ord['OrderDish']))
 					   {
 						$mainArray['order_id'] = $ord['Order']['id'];
-						$mainArray['order_date'] = $ord['Order']['created']; 
-						
+						$mainArray['order_date'] = $ord['Order']['created'];
+
 						if($ord['Order']['payment_type']==0)
 						$mainArray['transaction_id'] = str_replace('/orders/','',$ord['Order']['order_href']);
 						else
 						$mainArray['transaction_id'] = $ord['Order']['transaction_id'];
 
-						$mainArray['dine_type'] = $ord['Order']['dine_type'];  
-						$mainArray['order_date'] = $ord['Order']['created']; 
-						$mainArray['amount'] = $ord['Order']['amount']; 
-						$mainArray['order_value'] = $ord['Order']['order_value']; 
-						$mainArray['sale_tax'] = $ord['Order']['sale_tax']; 
-						$mainArray['service_fee'] = $ord['Order']['service_fee']; 
-						$mainArray['tax_percent'] = $ord['Order']['tax_percent']; 
-						
-						$mainArray['order_by'] = ''; 
-						$mainArray['order_by_id'] = ''; 
+						$mainArray['dine_type'] = $ord['Order']['dine_type'];
+						$mainArray['order_date'] = $ord['Order']['created'];
+						$mainArray['amount'] = $ord['Order']['amount'];
+						$mainArray['order_value'] = $ord['Order']['order_value'];
+						$mainArray['sale_tax'] = $ord['Order']['sale_tax'];
+						$mainArray['service_fee'] = $ord['Order']['service_fee'];
+						$mainArray['tax_percent'] = $ord['Order']['tax_percent'];
+
+						$mainArray['order_by'] = '';
+						$mainArray['order_by_id'] = '';
 						$mainArray['dishes'] = '';
-					   
+
 					    if(isset($ord['User']['name'])){
 							$mainArray['order_by'] = $ord['User']['name'];
-							$mainArray['order_by_id'] = $ord['User']['id']; 
+							$mainArray['order_by_id'] = $ord['User']['id'];
 						   }
 					   if(isset($ord['OrderDish']))
 					   {
 
-							$mainArray['dishes'] = $ord['OrderDish']; 
-							$mainArray['kitchen_name'] = ''; 
+							$mainArray['dishes'] = $ord['OrderDish'];
+							$mainArray['kitchen_name'] = '';
 							if(isset($ord['OrderDish'][0]['Kitchen']['name']))
-								$mainArray['kitchen_name'] = $ord['OrderDish'][0]['Kitchen']['name']; 
-					   }    
+								$mainArray['kitchen_name'] = $ord['OrderDish'][0]['Kitchen']['name'];
+					   }
 
 					   $or[] = $mainArray;
 					   }
-				   }      
+				   }
 			   }
-				
+
                if(!empty($orders_placed)){
 				   foreach ($orders_placed as $ord)
 				   {
@@ -4692,64 +4692,64 @@ class ApiController extends AppController {
 					   {
 						$mainArray['order_id'] = $ord['Order']['id'];
 						$mainArray['order_date'] = $ord['Order']['created'];
-						
+
 						if($ord['Order']['payment_type']==0)
 						$mainArray['transaction_id'] = str_replace('/orders/','',$ord['Order']['order_href']);
 						else
 						$mainArray['transaction_id'] = $ord['Order']['transaction_id'];
-						$mainArray['dine_type'] = $ord['Order']['dine_type']; 
-						 
-						$mainArray['amount'] = $ord['Order']['amount']; 
+						$mainArray['dine_type'] = $ord['Order']['dine_type'];
 
-						$mainArray['order_value'] = $ord['Order']['order_value']; 
-						$mainArray['sale_tax'] = $ord['Order']['sale_tax']; 
+						$mainArray['amount'] = $ord['Order']['amount'];
+
+						$mainArray['order_value'] = $ord['Order']['order_value'];
+						$mainArray['sale_tax'] = $ord['Order']['sale_tax'];
 						$mainArray['service_fee'] = $ord['Order']['service_fee'];
 						$mainArray['tax_percent'] = $ord['Order']['tax_percent'];
-						
+
 						$mainArray['dishes'] = '';
 
 						if(isset($ord['OrderDish']))	{
-						$mainArray['dishes'] = $ord['OrderDish'];  
-						$mainArray['kitchen_name'] = ''; 
+						$mainArray['dishes'] = $ord['OrderDish'];
+						$mainArray['kitchen_name'] = '';
 						if(isset($ord['OrderDish'][0]['Kitchen']['name']))
-							$mainArray['kitchen_name'] = $ord['OrderDish'][0]['Kitchen']['name']; 
-						}    
-					   
+							$mainArray['kitchen_name'] = $ord['OrderDish'][0]['Kitchen']['name'];
+						}
+
 					   $op[] = $mainArray;
 					   }
-				   }      
+				   }
 			   }
-			   
+
 			   $results['order_placed'] = array();
 			   if(isset($op) && !empty($op))
                $results['order_placed'] = $op;
-               
+
                $results['order_recieved'] = array();
 			   if(isset($or) && !empty($or))
                $results['order_recieved'] = $or;
-          
+
                 $this->response = array(
                      'status' => 1,
                      'message' => 'Orders found',
                     'value' => $results
                  );
-                               
-                       
+
+
             }
-            echo json_encode($this->response);        
+            echo json_encode($this->response);
         }
-        
+
         /*
          * Purpose: Fetch all Countries list
          * @Created: Bharat Borana
          * @Date: 23 Dec 14
-         * @Parameters: 
+         * @Parameters:
          * @Response: list of countries in json format
          */
-        
+
         function getCountries()
         {
-            //header('Content-Type: application/json');  
+            //header('Content-Type: application/json');
             $this->request->onlyAllow('POST');
      		   $results = array();
 			   $this->loadModel('Country');
@@ -4759,24 +4759,24 @@ class ApiController extends AppController {
 					 'message' => 'Coutries found',
 					'value' => $countries
 				 );
-         echo json_encode($this->response);        
+         echo json_encode($this->response);
         }
-        
+
          /*
          * Purpose: Fetch all States list
          * @Created: Bharat Borana
          * @Date: 23 Dec 14
-         * @Parameters: 
+         * @Parameters:
          * @Response: list of states in json format
          */
-        
+
         function getStates()
         {
-            //header('Content-Type: application/json');  
+            //header('Content-Type: application/json');
             $this->request->onlyAllow('POST');
-            $data = $this->request->data;
-            $error = '';		
-            
+            $data = $this->request->query;
+            $error = '';
+
             if(!empty($error))
             {
                 $this->response = array(
@@ -4785,7 +4785,7 @@ class ApiController extends AppController {
                 );
             }
             else
-            {            
+            {
      		   $this->loadModel('State');
 			   $states = $this->State->getAllStateName(223);
 			   $states = array_values($states);
@@ -4794,29 +4794,29 @@ class ApiController extends AppController {
 					 'message' => 'States found',
 					'value' => $states
 				 );
-			}	 
-         echo json_encode($this->response);        
+			}
+         echo json_encode($this->response);
         }
-        
+
          /*
          * Purpose: Fetch all Cities list
          * @Created: Bharat Borana
          * @Date: 23 Dec 14
-         * @Parameters: 
+         * @Parameters:
          * @Response: list of cities in json format
          */
-        
+
         function getCities()
         {
-            //header('Content-Type: application/json');  
+            //header('Content-Type: application/json');
             $this->request->onlyAllow('POST');
-            $data = $this->request->data;
-            $error = '';		
+            $data = $this->request->query;
+            $error = '';
             if(!isset($data['state_id']) || empty($data['state_id']))
             {
                 $error .= 'State id is Required. ';
-            }           
-            
+            }
+
             if(!empty($error))
             {
                 $this->response = array(
@@ -4825,7 +4825,7 @@ class ApiController extends AppController {
                 );
             }
             else
-            {            
+            {
      		   $this->loadModel('City');
 			   $states = $this->City->getAllCityName($data['state_id']);
 			   $this->response = array(
@@ -4833,10 +4833,10 @@ class ApiController extends AppController {
 					 'message' => 'Cities found',
 					'value' => $states
 				 );
-			}	 
-         echo json_encode($this->response);        
+			}
+         echo json_encode($this->response);
         }
-        
+
          /*
          * Purpose: User's Dashboad Data
          * @Created: Bharat Borana
@@ -4844,18 +4844,18 @@ class ApiController extends AppController {
          * @Parameters: user_id (int)
          * @Response: Dashboard data in json format
          */
-        
+
         function user_dashboard()
         {
-            //header('Content-Type: application/json');  
+            //header('Content-Type: application/json');
             $this->request->onlyAllow('POST');
-            $data = $this->request->data;
-            $error = '';		
+            $data = $this->request->query;
+            $error = '';
             if(!isset($data['user_id']) || empty($data['user_id']))
             {
                 $error .= 'User id is Required. ';
-            } 
-            
+            }
+
             if(!empty($error))
             {
                 $this->response = array(
@@ -4864,26 +4864,26 @@ class ApiController extends AppController {
                 );
             }
             else
-            {               
+            {
                $results = array();
                $this->loadModel('User');
                $userDetails = $this->User->getAllActivities($data);
-                
+
                $this->loadModel('ActivityLog');
-               $activityCount = $this->ActivityLog->find('count',array('conditions'=>array('ActivityLog.status'=>1, 'ActivityLog.user_id'=>$data['user_id']))); 
-		       
+               $activityCount = $this->ActivityLog->find('count',array('conditions'=>array('ActivityLog.status'=>1, 'ActivityLog.user_id'=>$data['user_id'])));
+
 		       $this->response = array(
                      'status' => 1,
                      'message' => 'Data found',
                      'count' => $activityCount,
                     'value' => $userDetails
                  );
-                               
-                       
+
+
             }
-            echo json_encode($this->response);        
+            echo json_encode($this->response);
         }
-        
+
         /*
 		 * Method	: searchforbulk
 		 * Author	: Bharat Borana
@@ -4891,17 +4891,17 @@ class ApiController extends AppController {
 		 * @Search kitchen and dishes with limited output params
 		 */
 		public function searchforbulk()
-		{ 
+		{
 			//header('Content-Type: application/json');
 			$this->request->onlyAllow('POST');
-			$data = $this->request->data;
+			$data = $this->request->query;
 			$error = '';
-			
+
 			if(!isset($data['address']) || empty($data['address']))
 			{
 				$error .= 'Address is Required. ';
 			}
-			
+
 			if(!empty($error))
 			{
 				$this->response = array(
@@ -4910,7 +4910,7 @@ class ApiController extends AppController {
 				);
 			}
 			else
-			{ 
+			{
 				$this->loadModel('Kitchen');
 				$results = $this->Kitchen->searchKitchenForBulk($data, $this);
 				$this->response = array(
@@ -4921,7 +4921,7 @@ class ApiController extends AppController {
 			}
 			echo json_encode($this->response);
 		}
-	
+
 		/*
 		 * Purpose: User's Dashboad Data
 		 * @Created: Bharat Borana
@@ -4929,18 +4929,18 @@ class ApiController extends AppController {
 		 * @Parameters: user_id (int)
 		 * @Response: Dashboard data in json format
 		 */
-        
+
         function user_profile()
         {
-            //header('Content-Type: application/json');  
+            //header('Content-Type: application/json');
             $this->request->onlyAllow('POST');
-            $data = $this->request->data;
-            $error = '';		
+            $data = $this->request->query;
+            $error = '';
             if(!isset($data['user_id']) || empty($data['user_id']))
             {
                 $error .= 'User id is Required. ';
-            }           
-            
+            }
+
             if(!empty($error))
             {
                 $this->response = array(
@@ -4949,11 +4949,11 @@ class ApiController extends AppController {
                 );
             }
             else
-            {               
+            {
                $results = array();
                $this->loadModel('User');
 			   $userDetails = $this->User->getUserCountData($data['user_id']);
-              
+
                $dashArray['User'] = array();
 			   if(!empty($userDetails)){
 					$dashArray['User']['id'] = $userDetails['User']['id'];
@@ -4962,7 +4962,7 @@ class ApiController extends AppController {
 					$dashArray['User']['image'] = (!empty($userDetails['User']['image'])) ? Router::url('/'.PROFILE_IMAGE_URL.$userDetails['User']['image'],true) : "";
 					$dashArray['User']['description'] = $userDetails['User']['description'];
 				}
-				
+
 				$dashArray['Kitchen'] = array();
 			    if(isset($userDetails['Kitchen']) && !empty($userDetails['Kitchen'])){
 					$dashArray['Kitchen'] = $userDetails['Kitchen'];
@@ -4972,12 +4972,12 @@ class ApiController extends AppController {
 						unset($dashArray['Kitchen']['Dish']);
 					}
 				}
-				
+
 				$dashArray['OrderPlaced']['Count'] = 0;
 				if(isset($userDetails['Order']) && !empty($userDetails['Order'])){
 					$dashArray['OrderPlaced']['Count'] = $userDetails['Order'][0]['Order'][0]['noOfPlacedOrders'];
 				}
-				
+
 				$this->loadModel('Kitchen');
 			    $ordersArray = $this->Kitchen->getKitchenDataForDashboard($data['user_id']);
    			    $dashArray['OrderReceived']['Count'] = 0;
@@ -4989,34 +4989,34 @@ class ApiController extends AppController {
                      'message' => 'Data found',
                     'value' => $dashArray
                  );
-                               
-                       
+
+
             }
-            echo json_encode($this->response);        
+            echo json_encode($this->response);
         }
-        
+
         /*
 		 * Purpose: App CMS Data
 		 * @Created: Bharat Borana
 		 * @Date: 31 Dec 14
-		 * @Parameters: 
+		 * @Parameters:
 		 * @Response: App CMS data including Orders, featured kitchens and videos in json format
 		 */
-        
+
         function app_cms()
         {
-            //header('Content-Type: application/json');  
+            //header('Content-Type: application/json');
             $this->request->onlyAllow('POST');
-            $data = $this->request->data;
-            $error = '';		
+            $data = $this->request->query;
+            $error = '';
             if(!isset($data['app_id']) || empty($data['app_id']))
             {
                 $error .= 'Application id is Required. ';
             }
             if(isset($data['app_id']) && $data['app_id']!='abc-app'){
 			    $error .= 'Incorrect application id, please try again later. ';
-            }           
-            
+            }
+
             if(!empty($error))
             {
                 $this->response = array(
@@ -5025,28 +5025,28 @@ class ApiController extends AppController {
                 );
             }
             else
-            {               
+            {
                $cmsDetails = array();
                $this->loadModel('Kitchen');
 			   $cmsDetails['Kitchen'] = $this->Kitchen->getfeaturedKitchens();
-              
+
 			   $this->loadModel('Testimonial');
 			   $cmsDetails['Testimonial'] = $this->Testimonial->getfeaturedTestimonials();
-              
+
 			   $this->loadModel('Video');
 			   $cmsDetails['Video'] = $this->Video->getfeaturedVideos();
-              
+
                $this->response = array(
                      'status' => 1,
                      'message' => 'Data found',
                     'value' => $cmsDetails
                  );
-                               
-                       
+
+
             }
-            echo json_encode($this->response);        
+            echo json_encode($this->response);
         }
-     
+
       /*
 		 * Purpose: Order completion api
 		 * @Created: Bharat Borana
@@ -5054,12 +5054,12 @@ class ApiController extends AppController {
 		 * @Parameters: order_id, user_id
 		 * @Response: success if order_exists
 		 */
-        
+
         public function order_completion()
 		{
 			//header('Content-Type: application/json');
 			$this->request->onlyAllow('POST');
-			$data = $this->request->data;
+			$data = $this->request->query;
 			$error = '';
 			if(empty($data['order_id']))
 			{
@@ -5069,7 +5069,7 @@ class ApiController extends AppController {
 			{
 				$error .= 'User id is Required. ';
 			}
-		
+
 			if(!empty($error))
 			{
 				$this->response = array(
@@ -5082,11 +5082,11 @@ class ApiController extends AppController {
 				$this->loadModel('Order');
 				$order = $this->Order->find('first', array('conditions'=>array('Order.id' => $data['order_id'],
 																				'Order.user_id' => $data['user_id']),
-														   'recursive'=>0					
-																		
+														   'recursive'=>0
+
 				));
-				
-				
+
+
 				if(!empty($order))
 				{
 					if($order['Order']['is_verified']==1)
@@ -5100,7 +5100,7 @@ class ApiController extends AppController {
 									'message' => "Your order has been successfully completed."
 							);
 						}
-						else 
+						else
 						{
 							$this->response = array(
 									'status' => 2,
@@ -5123,7 +5123,7 @@ class ApiController extends AppController {
 							);
 					}
 				}
-				else 
+				else
 				{
 					$this->response = array(
 											'status' => 2,
@@ -5132,8 +5132,8 @@ class ApiController extends AppController {
 				}
 			}
 			echo json_encode($this->response);//592746
-		}  
-	
+		}
+
 	/*
 		 * Purpose: Order confirmation api
 		 * @Created: Bharat Borana
@@ -5141,12 +5141,12 @@ class ApiController extends AppController {
 		 * @Parameters: order_id, user_id
 		 * @Response: success if order_exists
 		 */
-        
+
         public function order_confirmation()
 		{
 			//header('Content-Type: application/json');
 			$this->request->onlyAllow('POST');
-			$data = $this->request->data;
+			$data = $this->request->query;
 			$error = '';
 			if(empty($data['order_id']))
 			{
@@ -5168,7 +5168,7 @@ class ApiController extends AppController {
 			{
 				$error .= 'Status is Required. ';
 			}
-			
+
 			if(!empty($error))
 			{
 				$this->response = array(
@@ -5207,7 +5207,7 @@ class ApiController extends AppController {
 						{
 							$status = 1;
 							$message = 'Your order has successfully declined.';
-						
+
 							$this->Order->set('is_verified', 3);
 							$this->loadModel('ActivityLog');
 							$activityLog = $this->ActivityLog->updateAll(array('ActivityLog.status'=>0),array('ActivityLog.activity_id'=>2,'ActivityLog.user_id'=>$data['user_id'],'ActivityLog.order_id'=>$order['Order']['id']));
@@ -5216,7 +5216,7 @@ class ApiController extends AppController {
 						{
 							$status = 2;
 							$message = 'This order has already confirmed.';
-						
+
 						}
 					}
 
@@ -5227,7 +5227,7 @@ class ApiController extends AppController {
 							'message' => $message
 						);
 					}
-					else 
+					else
 					{
 						$this->response = array(
 								'status' => 2,
@@ -5236,7 +5236,7 @@ class ApiController extends AppController {
 					}
 
 				}
-				else 
+				else
 				{
 					$this->response = array(
 											'status' => 2,
@@ -5254,12 +5254,12 @@ class ApiController extends AppController {
 		 * @Parameters: order_id, user_id
 		 * @Response: success if order_exists
 		 */
-        
+
         public function order_cancellation()
 		{
 			//header('Content-Type: application/json');
 			$this->request->onlyAllow('POST');
-			$data = $this->request->data;
+			$data = $this->request->query;
 			$error = '';
 			if(empty($data['order_id']))
 			{
@@ -5273,7 +5273,7 @@ class ApiController extends AppController {
 			{
 				$error .= 'Timestamp is Required. ';
 			}
-		
+
 			if(!empty($error))
 			{
 				$this->response = array(
@@ -5287,11 +5287,11 @@ class ApiController extends AppController {
 				$this->Order->bindModel(array('belongsTo'=>array('Kitchen')));
 				$order = $this->Order->find('first', array('conditions'=>array('Order.id' => $data['order_id'],
 																				'Order.user_id' => $data['user_id']),
-														   'recursive'=>0					
-																		
+														   'recursive'=>0
+
 				));
 				$this->Order->unbindModel(array('belongsTo'=>array('Kitchen')));
-				
+
 				if(!empty($order))
 				{
 					if($order['Order']['is_verified']==0)
@@ -5302,13 +5302,13 @@ class ApiController extends AppController {
 						{
 							$this->loadModel('ActivityLog');
 							$activityLog = $this->ActivityLog->updateAll(array('ActivityLog.status'=>0),array('ActivityLog.activity_id'=>2,'ActivityLog.user_id'=>$order['Kitchen']['user_id'],'ActivityLog.order_id'=>$order['Order']['id']));
-				
+
 							$this->response = array(
 									'status' => 1,
 									'message' => "Your order has cancelled successfully."
 							);
 						}
-						else 
+						else
 						{
 							$this->response = array(
 									'status' => 2,
@@ -5331,7 +5331,7 @@ class ApiController extends AppController {
 							);
 					}
 				}
-				else 
+				else
 				{
 					$this->response = array(
 											'status' => 2,
@@ -5340,8 +5340,8 @@ class ApiController extends AppController {
 				}
 			}
 			echo json_encode($this->response);//592746
-		} 
-	
+		}
+
 		/*
 		 * Purpose: Change activity log status
 		 * @Created: Bharat Borana
@@ -5349,12 +5349,12 @@ class ApiController extends AppController {
 		 * @Parameters: activitylog_id, user_id
 		 * @Response: success if activity_exists
 		 */
-        
+
         public function removeActivity()
 		{
 			//header('Content-Type: application/json');
 			$this->request->onlyAllow('POST');
-			$data = $this->request->data;
+			$data = $this->request->query;
 			$error = '';
 			if(empty($data['activitylog_id']))
 			{
@@ -5364,7 +5364,7 @@ class ApiController extends AppController {
 			{
 				$error .= 'User id should not empty. ';
 			}
-			
+
 			if(!empty($error))
 			{
 				$this->response = array(
@@ -5387,7 +5387,7 @@ class ApiController extends AppController {
 								'message' => "This activity has been successfully removed from your dashboard."
 						);
 					}
-					else 
+					else
 					{
 						$this->response = array(
 								'status' => 2,
@@ -5395,7 +5395,7 @@ class ApiController extends AppController {
 						);
 					}
 				}
-				else 
+				else
 				{
 					$this->response = array(
 											'status' => 2,
@@ -5404,10 +5404,10 @@ class ApiController extends AppController {
 				}
 			}
 			echo json_encode($this->response);//592746
-		}	  	
-    
+		}
+
 	function testFnb(){
-		
+
 		//$this->SuiteTest->deleteBankAccount();
 		//$this->SuiteTest->deleteBankAccount('/cards/CC5VB3hr1ZHRKlCy4tZNxpuT');
 		//$this->SuiteTest->deleteBankAccount('/bank_accounts/BA6rqsnvhn85gdLiFx6GTAFq');
@@ -5421,7 +5421,7 @@ class ApiController extends AppController {
 				'+91123123123', // Text this number
 				$text
 		);
-		pr($message); exit; 
+		pr($message); exit;
 		$sendsms = '';
 		$param['To'] = "919001202858";
 		$param['Message'] = "Hello World";
@@ -5432,7 +5432,7 @@ class ApiController extends AppController {
 		$param['Type'] = "Individual";
 		foreach($param as $key=>$val){
 			$sendsms .= $key."=".urlencode($val);
-			$sendsms .= "&"; 
+			$sendsms .= "&";
 		}
 		$sendsms = substr($sendsms,0,strlen($sendsms)-1);
 		$url = "http://www.smsgatewaycenter.com/library/send_sms_2.php?".$sendsms;
@@ -5442,7 +5442,7 @@ class ApiController extends AppController {
 		curl_close($ch);
 		echo $curl_scraped_page;*/
 	}
-        
+
     /*
 	 * Method	: getAdminId
 	 * Author	: Bharat Borana
@@ -5450,18 +5450,18 @@ class ApiController extends AppController {
 	 * @Search for admin email id
 	 */
 	public function getAdminId()
-	{ 
+	{
 		//header('Content-Type: application/json');
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
+		$data = $this->request->query;
 		$error = '';
-		
+
 		if(!isset($data['user_id']) || empty($data['user_id']))
 		{
 			$error .= 'User Id is Required. ';
 		}
 		else
-		{	
+		{
 			$this->loadModel('User');
 			$userDetails = $this->User->findById($data['user_id']);
 			if(empty($userDetails))
@@ -5469,7 +5469,7 @@ class ApiController extends AppController {
 				$error .= 'User does not exists. ';
 			}
 		}
-		
+
 
 		if(!empty($error))
 		{
@@ -5479,7 +5479,7 @@ class ApiController extends AppController {
 			);
 		}
 		else
-		{ 
+		{
 			$adminDetails = $this->User->find('first',array('fields'=>array('User.id'),'conditions'=>array('User.group_id'=>1)));
 			if(isset($adminDetails) && !empty($adminDetails))
 			{
@@ -5490,7 +5490,7 @@ class ApiController extends AppController {
 				);
 			}
 			else
-			{	
+			{
 				$this->response = array(
 						'status' => 2,
 						'message' => 'Admin not found.'
@@ -5507,12 +5507,12 @@ class ApiController extends AppController {
 	 * @Search for user's paypal email verification
 	 */
 	public function checkPaypalVerification()
-	{ 
+	{
 		//header('Content-Type: application/json');
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
+		$data = $this->request->query;
 		$error = '';
-		
+
 		if(!isset($data['paypal_id']) || empty($data['paypal_id']))
 		{
 			$error .= 'Paypal Id is Required. ';
@@ -5533,7 +5533,7 @@ class ApiController extends AppController {
 			$error .= 'User Id is Required. ';
 		}
 		else
-		{	
+		{
 			$this->loadModel('User');
 			$userDetails = $this->User->findById($data['user_id']);
 			if(empty($userDetails))
@@ -5541,7 +5541,7 @@ class ApiController extends AppController {
 				$error .= 'User does not exists. ';
 			}
 		}
-		
+
 
 		if(!empty($error))
 		{
@@ -5551,13 +5551,13 @@ class ApiController extends AppController {
 			);
 		}
 		else
-		{ 
+		{
 			$detailsAre['emailAddress'] = $data['paypal_id'];
 			$detailsAre['firstName'] = $data['paypal_name'];
 			$detailsAre['lastName'] = $data['paypal_lname'];
 			$detailsAre['matchCriteria'] = "NAME";
-			$detailsAre['requestEnvelope.errorLanguage'] = "en_US"; 
-			$detailsAre['requestEnvelope.detailLevel'] = "ReturnAll"; 
+			$detailsAre['requestEnvelope.errorLanguage'] = "en_US";
+			$detailsAre['requestEnvelope.detailLevel'] = "ReturnAll";
 
 
 			$url = 'https://svcs.paypal.com/AdaptiveAccounts/GetVerifiedStatus';
@@ -5565,14 +5565,14 @@ class ApiController extends AppController {
 
 			if(isset($getExpData->responseEnvelope->ack) && $getExpData->responseEnvelope->ack=='Success')
 			{
-				$this->request->data['User']['id'] = $data['user_id'];
-				$this->request->data['User']['is_paypal_verified'] = 1;
-				$this->request->data['User']['paypal_id'] = $data['paypal_id'];
-				$this->request->data['User']['paypal_name'] = $data['paypal_name'];
-				$this->request->data['User']['paypal_lname'] = $data['paypal_lname'];
-				
+				$this->request->query['User']['id'] = $data['user_id'];
+				$this->request->query['User']['is_paypal_verified'] = 1;
+				$this->request->query['User']['paypal_id'] = $data['paypal_id'];
+				$this->request->query['User']['paypal_name'] = $data['paypal_name'];
+				$this->request->query['User']['paypal_lname'] = $data['paypal_lname'];
+
 				$this->loadModel('User');
-				$this->User->set($this->request->data);
+				$this->User->set($this->request->query);
 				$this->User->save();
 				$this->response = array(
 						'status' => 1,
@@ -5581,14 +5581,14 @@ class ApiController extends AppController {
 			}
 			else if(isset($getExpData->responseEnvelope->ack) && $getExpData->responseEnvelope->ack=='Failure')
 			{
-				$this->request->data['User']['id'] = $data['user_id'];
-				$this->request->data['User']['is_paypal_verified'] = 0;
-				$this->request->data['User']['paypal_id'] = $data['paypal_id'];
-				$this->request->data['User']['paypal_name'] = $data['paypal_name'];
-				$this->request->data['User']['paypal_lname'] = $data['paypal_lname'];
-				
+				$this->request->query['User']['id'] = $data['user_id'];
+				$this->request->query['User']['is_paypal_verified'] = 0;
+				$this->request->query['User']['paypal_id'] = $data['paypal_id'];
+				$this->request->query['User']['paypal_name'] = $data['paypal_name'];
+				$this->request->query['User']['paypal_lname'] = $data['paypal_lname'];
+
 				$this->loadModel('User');
-				$this->User->set($this->request->data);
+				$this->User->set($this->request->query);
 				$this->User->save();
 				$this->response = array(
 						'status' => 2,
@@ -5597,7 +5597,7 @@ class ApiController extends AppController {
 			}
 		}
 		echo json_encode($this->response);
-	}  
+	}
 
 	 /*
 	 * Method	: paypalValidation
@@ -5606,12 +5606,12 @@ class ApiController extends AppController {
 	 * @Paypal data validation
 	 */
 	public function paypalValidation()
-	{ 
+	{
 		//header('Content-Type: application/json');
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
+		$data = $this->request->query;
 		$error = '';
-		
+
 		if(!isset($data['user_id']) || empty($data['user_id']))
         {
             $error .= 'User id is Required. ';
@@ -5619,7 +5619,7 @@ class ApiController extends AppController {
         if(!isset($data['amount']) || empty($data['amount']))
         {
             $error .= 'Order amount is required. ';
-        }            
+        }
         if(!isset($data['phone']) || empty($data['phone']))
         {
             $error .= 'Phone is required. ';
@@ -5672,14 +5672,14 @@ class ApiController extends AppController {
 		{
 			$error .= 'Paypal id required.';
 		}
-		
+
 		if(!isset($data['service_fee']) || empty($data['service_fee']))
 		{
 			$error .= 'Service fee required.';
 		}
 
-    
-		
+
+
 
 		if(!empty($error))
 		{
@@ -5689,7 +5689,7 @@ class ApiController extends AppController {
 			);
 		}
 		else
-		{ 
+		{
 			$this->response = array(
 				'status' => 1,
 				'message' => 'success'
@@ -5703,11 +5703,11 @@ class ApiController extends AppController {
 	 * Author	: Bharat Borana
 	 * Created	: 27 Feb, 2015
 	 */
-	public function cms_detail() { 
+	public function cms_detail() {
 		$this->loadModel('Cmspage');
 		//header('Content-Type: application/json');
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
+		$data = $this->request->query;
 		$error = '';
 
 		if(!isset($data['page_id']) || empty($data['page_id']))
@@ -5721,7 +5721,7 @@ class ApiController extends AppController {
         	{
 				$error .= 'Cmspage not found.';
 			}
-		
+
         }
 
 		if(!empty($error)) {
@@ -5745,9 +5745,9 @@ class ApiController extends AppController {
 
 	public function getPaypalVerification()
 	{
-		
+
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
+		$data = $this->request->query;
 		$error = '';
 
 		if(!isset($data['paypal_id']) || empty($data['paypal_id']))
@@ -5762,7 +5762,7 @@ class ApiController extends AppController {
         {
             $error .= 'Last Name is Required. ';
         }
-      
+
 		if(!empty($error)) {
 			$this->response = array(
 				'status' => 2,
@@ -5775,8 +5775,8 @@ class ApiController extends AppController {
 				$detailsAre['firstName'] = $data['paypal_name'];
 				$detailsAre['lastName'] = $data['paypal_lname'];
 				$detailsAre['matchCriteria'] = "NAME";
-				$detailsAre['requestEnvelope.errorLanguage'] = "en_US"; 
-				$detailsAre['requestEnvelope.detailLevel'] = "ReturnAll"; 
+				$detailsAre['requestEnvelope.errorLanguage'] = "en_US";
+				$detailsAre['requestEnvelope.detailLevel'] = "ReturnAll";
 
 				$url = 'https://svcs.paypal.com/AdaptiveAccounts/GetVerifiedStatus';
 				$getExpData = $this->Paypal->pay_me($detailsAre,$url);
@@ -5794,12 +5794,12 @@ class ApiController extends AppController {
 						'message' => 'Your paypal id has not verified, Please try again.'
 					);
 				}
-		}	
-		echo json_encode($this->response);	
+		}
+		echo json_encode($this->response);
 	}
 
 		/**
-	* function Name : logout	 
+	* function Name : logout
 	* author : Bharat Borana
 	* 24 Mar 2015
 	* Description : User logout
@@ -5807,7 +5807,7 @@ class ApiController extends AppController {
 	public function logout()
 	{
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
+		$data = $this->request->query;
 		$error = '';
 
 		if(!isset($data['user_id']) || empty($data['user_id']))
@@ -5846,32 +5846,32 @@ class ApiController extends AppController {
 					'message' => 'User not found.'
 				);
 			}
-		}	
-		echo json_encode($this->response);	
+		}
+		echo json_encode($this->response);
 	}
 
 	 /*
 		 * Purpose: App CMS City Data
 		 * @Created: Bharat Borana
 		 * @Date: 25 Mar 15
-		 * @Parameters: 
+		 * @Parameters:
 		 * @Response: App CMS City data in json format
 		 */
-        
+
         function cms_cities()
         {
-            //header('Content-Type: application/json');  
+            //header('Content-Type: application/json');
             $this->request->onlyAllow('POST');
-            $data = $this->request->data;
-            $error = '';		
+            $data = $this->request->query;
+            $error = '';
             if(!isset($data['app_id']) || empty($data['app_id']))
             {
                 $error .= 'Application id is Required. ';
             }
             if(isset($data['app_id']) && $data['app_id']!='abc-app'){
 			    $error .= 'Incorrect application id, please try again later. ';
-            }           
-            
+            }
+
             if(!empty($error))
             {
                 $this->response = array(
@@ -5880,23 +5880,23 @@ class ApiController extends AppController {
                 );
             }
             else
-            {               
+            {
                $cmsDetails = array();
-               
+
                $this->loadModel('CmsCity');
 			   $cmsDetails['CmsCity'] = $this->CmsCity->getfeaturedCities();
-               
+
                $this->response = array(
                      'status' => 1,
                      'message' => 'Data found',
                     'value' => $cmsDetails
                  );
             }
-            echo json_encode($this->response);        
+            echo json_encode($this->response);
         }
 
     /**
-	* function Name : logout	 
+	* function Name : logout
 	* author : Bharat Borana
 	* 24 Mar 2015
 	* Description : User logout
@@ -5904,7 +5904,7 @@ class ApiController extends AppController {
 	public function checkStripeStatus()
 	{
 		$this->request->onlyAllow('POST');
-		$data = $this->request->data;
+		$data = $this->request->query;
 		$error = '';
 
 		if(!isset($data['user_id']) || empty($data['user_id']))
@@ -5953,8 +5953,8 @@ class ApiController extends AppController {
 					'message' => 'User not found.'
 				);
 			}
-		}	
-		echo json_encode($this->response);	
+		}
+		echo json_encode($this->response);
 	}
 
 	/*
@@ -5964,13 +5964,13 @@ class ApiController extends AppController {
      * @Parameters: user_id (int), order_id (int)
      * @Response: orders data
      */
-    
+
     function order_detail()
     {
-    	//header('Content-Type: application/json');  
+    	//header('Content-Type: application/json');
         $this->request->onlyAllow('POST');
-        $data = $this->request->data;
-        $error = '';		
+        $data = $this->request->query;
+        $error = '';
         if(!isset($data['user_id']) || empty($data['user_id']))
         {
             $error .= 'User id is Required. ';
@@ -5978,8 +5978,8 @@ class ApiController extends AppController {
         if(!isset($data['order_id']) || empty($data['order_id']))
         {
 		    $error .= 'Order id is required. ';
-        }           
-        
+        }
+
         if(!empty($error))
         {
             $this->response = array(
@@ -5988,19 +5988,19 @@ class ApiController extends AppController {
             );
         }
         else
-        {               
+        {
            $userId = $data['user_id'];
            $order_id = $data['order_id'];
 
            $this->loadModel('Order');
 	       $this->loadModel('Kitchen');
-	       
+
 	       $ordersArray = $this->Kitchen->getallorderIds($userId);
-		   
+
 		   $this->Order->Behaviors->attach('Containable');
 	       $orders_recieved = array();
 
-	       
+
 	       if(!empty($ordersArray)){
 		   	$conditions['OR'][] = array('Order.user_id'=>$userId);
 	       	$conditions['OR'][] = array('Order.id IN('.$ordersArray.')');
@@ -6017,15 +6017,15 @@ class ApiController extends AppController {
 																				'OrderDish'=>array('Kitchen'=>array('fields'=>array('Kitchen.name','Kitchen.sales_tax')))),
 															   'recursive'=>2));
 	       $this->Order->Behaviors->detach('Containable');
-	    
-	       
+
+
            $this->response = array(
                  'status' => 1,
                  'message' => 'Data found',
                 'value' => $order_details
              );
         }
-        echo json_encode($this->response);    
+        echo json_encode($this->response);
     }
 
 
@@ -6036,13 +6036,13 @@ class ApiController extends AppController {
      * @Parameters: user_id (int), email_id (varchar), phone_nu(varchar)
      * @Response: orders data
      */
-    
+
     function send_referral()
     {
-    	//header('Content-Type: application/json');  
+    	//header('Content-Type: application/json');
         $this->request->onlyAllow('POST');
-        $data = $this->request->data;
-        $error = '';		
+        $data = $this->request->query;
+        $error = '';
         if(!isset($data['user_id']) || empty($data['user_id']))
         {
             $error .= 'User id is Required. ';
@@ -6050,8 +6050,8 @@ class ApiController extends AppController {
         if((!isset($data['email']) || empty($data['email'])) && (!isset($data['phone']) || empty($data['phone'])))
         {
 		    $error .= 'Email Address or Phone number is required. ';
-        }           
-        
+        }
+
         if(!empty($error))
         {
             $this->response = array(
@@ -6069,16 +6069,16 @@ class ApiController extends AppController {
 					$userName = $userDetails['User']['name'];
 				else
 					$userName = "Lacart User";
-				
+
 				$name = ucfirst($userName);
-							
+
 				if(isset($data['phone']) && !empty($data['phone']))
 				{
 					$phoneArray = explode(",", $data['phone']);
-					
+
 					//pr($phoneArray); exit;
 					foreach ($phoneArray as $phKey => $phValue)
-					{ 
+					{
 						try
 						{
 							$text = "Hello, $name has invited you to try Lacart. Download our apps now or visit ";
@@ -6111,7 +6111,7 @@ class ApiController extends AppController {
 				{
 					$emailArray = explode(",", $data['email']);
 					$this->loadModel('EmailTemplate');
-					
+
 					foreach ($emailArray as $emKey => $emValue)
 					{
 
@@ -6122,7 +6122,7 @@ class ApiController extends AppController {
 						$arr = array();
 						$arr['{{sender_name}}'] = $name;
 						$arr['{{name}}'] = $emValue;
-						
+
 						$email_content = $this->EmailTemplate->findBySlug('invite-email');
 
 
@@ -6148,7 +6148,7 @@ class ApiController extends AppController {
 	            	);
 				}
 	    }
-        echo json_encode($this->response);    
+        echo json_encode($this->response);
     }
 
 
@@ -6156,16 +6156,16 @@ class ApiController extends AppController {
 		 * Purpose: Update device id status
 		 * @Created: Bharat Borana
 		 * @Date: 26 May 15
-		 * @Parameters: 
+		 * @Parameters:
 		 * @Response: Success if updated
 		 */
-        
+
         function updateDeviceToken()
         {
-            //header('Content-Type: application/json');  
+            //header('Content-Type: application/json');
             $this->request->onlyAllow('POST');
-            $data = $this->request->data;
-            
+            $data = $this->request->query;
+
 			if(isset($data['user_id']) && !empty($data['user_id']))
 			{
 				if(!isset($data['device_type']) || empty($data['device_type']))
@@ -6188,10 +6188,10 @@ class ApiController extends AppController {
 					$this->UserApp->updateAll(array('UserApp.app_status'=>$app_status),array('UserApp.user_id' => $data['user_id'], 'UserApp.device_type' => $data['device_type']));
 				}
 
-			}     
-            
-            echo json_encode($this->response);        
+			}
+
+            echo json_encode($this->response);
         }
 
-}   
+}
 ?>
